@@ -1,29 +1,32 @@
 'use client'
 
 import { useState } from 'react'
+import { AuthProvider, useAuth } from '@/lib/auth'
 import { StoreProvider } from '@/lib/store'
 import { LoginScreen } from '@/components/auth/login-screen'
 import { SignupScreen } from '@/components/auth/signup-screen'
 import { AppFrame } from '@/components/app-frame'
 
-type AuthView = 'login' | 'signup'
+function BudgetingAppContent() {
+  const { user, loading } = useAuth()
+  const [authView, setAuthView] = useState<'login' | 'signup'>('login')
 
-export default function BudgetingApp() {
-  const [authed, setAuthed] = useState(false)
-  const [authView, setAuthView] = useState<AuthView>('login')
+  if (loading) {
+    return null
+  }
 
-  if (!authed) {
+  if (!user) {
     if (authView === 'signup') {
       return (
         <SignupScreen
-          onSignup={() => setAuthed(true)}
+          onSignup={() => {}}
           onGoToLogin={() => setAuthView('login')}
         />
       )
     }
     return (
       <LoginScreen
-        onLogin={() => setAuthed(true)}
+        onLogin={() => {}}
         onGoToSignup={() => setAuthView('signup')}
       />
     )
@@ -31,7 +34,15 @@ export default function BudgetingApp() {
 
   return (
     <StoreProvider>
-      <AppFrame onSignOut={() => setAuthed(false)} />
+      <AppFrame />
     </StoreProvider>
+  )
+}
+
+export default function BudgetingApp() {
+  return (
+    <AuthProvider>
+      <BudgetingAppContent />
+    </AuthProvider>
   )
 }

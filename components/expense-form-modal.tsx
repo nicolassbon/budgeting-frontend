@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Box from '@cloudscape-design/components/box'
 import Button from '@cloudscape-design/components/button'
 import FormField from '@cloudscape-design/components/form-field'
@@ -8,10 +8,10 @@ import Input from '@cloudscape-design/components/input'
 import Modal from '@cloudscape-design/components/modal'
 import Select, { SelectProps } from '@cloudscape-design/components/select'
 import SpaceBetween from '@cloudscape-design/components/space-between'
-import { CATEGORIES, type Category } from '@/lib/types'
+import { CATEGORIES, type Category, translateCategory } from '@/lib/types'
 
 const CATEGORY_OPTIONS: SelectProps.Option[] = CATEGORIES.map((c) => ({
-  label: c,
+  label: translateCategory(c),
   value: c,
 }))
 
@@ -48,7 +48,7 @@ export function ExpenseFormModal({
   )
   const [category, setCategory] = useState<SelectProps.Option | null>(
     initial?.category
-      ? { label: initial.category, value: initial.category }
+      ? { label: translateCategory(initial.category), value: initial.category }
       : null,
   )
   const [errors, setErrors] = useState<{
@@ -56,6 +56,24 @@ export function ExpenseFormModal({
     amount?: string
     category?: string
   }>({})
+
+  useEffect(() => {
+    setDescription(initial?.description ?? '')
+    setAmount(
+      initial?.amount !== null && initial?.amount !== undefined
+        ? String(initial.amount)
+        : '',
+    )
+    setCategory(
+      initial?.category
+        ? {
+            label: translateCategory(initial.category),
+            value: initial.category,
+          }
+        : null,
+    )
+    setErrors({})
+  }, [initial, visible])
 
   function submit() {
     const next: typeof errors = {}

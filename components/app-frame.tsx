@@ -10,6 +10,7 @@ import SpaceBetween from '@cloudscape-design/components/space-between'
 import TopNavigation from '@cloudscape-design/components/top-navigation'
 import { applyMode, Mode } from '@cloudscape-design/global-styles'
 
+import { useAuth } from '@/lib/auth'
 import { CaptureScreen } from '@/components/screens/capture-screen'
 import { DashboardScreen } from '@/components/screens/dashboard-screen'
 import { HistoryScreen } from '@/components/screens/history-screen'
@@ -41,7 +42,8 @@ const HELP_BY_SECTION: Record<Section, { title: string; body: string[] }> = {
   },
 }
 
-export function AppFrame({ onSignOut }: { onSignOut: () => void }) {
+export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
+  const { user, signOut } = useAuth()
   const [section, setSection] = useState<Section>('capturar')
   const [navigationOpen, setNavigationOpen] = useState(true)
   const [toolsOpen, setToolsOpen] = useState(false)
@@ -98,7 +100,7 @@ export function AppFrame({ onSignOut }: { onSignOut: () => void }) {
             {
               type: 'menu-dropdown',
               text: 'Vos',
-              description: 'vos@budgeting.app',
+              description: user?.email ?? 'vos@budgeting.app',
               iconName: 'user-profile',
               items: [
                 { id: 'perfil', text: 'Mi perfil' },
@@ -106,7 +108,9 @@ export function AppFrame({ onSignOut }: { onSignOut: () => void }) {
                 { id: 'signout', text: 'Cerrar sesión' },
               ],
               onItemClick: ({ detail }) => {
-                if (detail.id === 'signout') onSignOut()
+                if (detail.id === 'signout') {
+                  signOut().then(() => onSignOut?.())
+                }
               },
             },
           ]}
@@ -131,7 +135,13 @@ export function AppFrame({ onSignOut }: { onSignOut: () => void }) {
             onFollow={(e) => {
               e.preventDefault()
               const next = e.detail.href.replace('#/', '') as Section
-              setSection(next)
+              if (
+                next === 'capturar' ||
+                next === 'inicio' ||
+                next === 'historial'
+              ) {
+                setSection(next)
+              }
             }}
             items={[
               { type: 'link', text: 'Capturar gasto', href: '#/capturar' },

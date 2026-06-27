@@ -1,0 +1,71 @@
+schema: spec-driven
+strict_tdd: true
+
+context: |
+  Tech stack: Next.js 15 App Router, React 18, TypeScript 5.7, pnpm.
+  UI: AWS Cloudscape Design System.
+  Architecture: single-route client shell with mocked auth and in-memory React Context store.
+  Testing: Vitest + JSDOM, Testing Library, ESLint 9, Prettier 3, tsc --noEmit.
+  Conventions: Cloudscape tokens over raw CSS; no Tailwind/shadcn; es-AR UI copy.
+
+testing:
+  detected: 2026-06-27
+  strict_tdd: true
+  runner:
+    command: pnpm test
+    framework: Vitest
+    environment: jsdom
+  layers:
+    unit:
+      available: true
+      tool: Vitest
+    integration:
+      available: true
+      tool: Testing Library + Vitest
+    e2e:
+      available: false
+      tool: ''
+  coverage:
+    available: false
+    command: ''
+  quality:
+    linter:
+      available: true
+      command: pnpm lint
+    type_checker:
+      available: true
+      command: pnpm exec tsc --noEmit
+    formatter:
+      available: true
+      command: pnpm format:check
+    build:
+      available: true
+      command: pnpm build
+
+rules:
+  proposal:
+    - Keep proposals scoped to one user-visible change.
+    - State rollback expectations when touching capture or expense flows.
+  specs:
+    - Use RFC 2119 keywords (MUST, SHOULD, MAY).
+    - Write scenarios in Given/When/Then form.
+  design:
+    - Respect the single-page shell and current mock auth/store boundaries.
+    - Preserve Cloudscape integration and design-token-based styling.
+  tasks:
+    - Group tasks by phase and keep each task reviewable in one session.
+  apply:
+    tdd: true
+    test_command: pnpm test
+    rules:
+      - Follow existing Next.js App Router and strict TypeScript patterns.
+  verify:
+    test_command: pnpm test
+    build_command: pnpm build
+    typecheck_command: pnpm exec tsc --noEmit
+    lint_command: pnpm lint
+    format_check_command: pnpm format:check
+    coverage_threshold: 0
+  archive:
+    - Merge only finalized deltas into main specs.
+    - Preserve archived changes as immutable audit trail.

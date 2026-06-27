@@ -17,9 +17,8 @@ import Spinner from '@cloudscape-design/components/spinner'
 import StatusIndicator from '@cloudscape-design/components/status-indicator'
 
 import { useStore } from '@/lib/store'
-import { interpretExpense } from '@/lib/format'
-import { formatARS } from '@/lib/format'
-import { CATEGORIES, type Category } from '@/lib/types'
+import { formatARS, mockCaptureService } from '@/lib/format'
+import { CATEGORIES, type Category, translateCategory } from '@/lib/types'
 
 type CaptureState =
   | 'idle'
@@ -30,7 +29,7 @@ type CaptureState =
   | 'saving'
 
 const CATEGORY_OPTIONS: SelectProps.Option[] = CATEGORIES.map((c) => ({
-  label: c,
+  label: translateCategory(c),
   value: c,
 }))
 
@@ -48,8 +47,8 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
 
   const [state, setState] = useState<CaptureState>('idle')
   const [text, setText] = useState('')
+  const [showSpeechWarning, setShowSpeechWarning] = useState(false)
 
-  // Editable draft fields (the interpreted preview).
   const [draftDescription, setDraftDescription] = useState('')
   const [draftAmount, setDraftAmount] = useState('')
   const [draftCategory, setDraftCategory] = useState<SelectProps.Option | null>(
@@ -75,35 +74,38 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
       clearTimers()
       try {
         recognitionRef.current?.stop?.()
-      } catch {
-        /* noop */
-      }
+      } catch {}
     }
   }, [clearTimers])
-
-  function buildDraftFrom(raw: string) {
-    const result = interpretExpense(raw)
-    setDraftDescription(result.description)
-    setDraftAmount(result.amount !== null ? String(result.amount) : '')
-    setDraftCategory(
-      result.category
-        ? { label: result.category, value: result.category }
-        : null,
-    )
-    setInterpretIncomplete(result.amount === null || result.category === null)
-    setDraftErrors({})
-    setState('preview')
-  }
 
   function interpret(raw: string) {
     const value = raw.trim()
     if (!value) return
     setState('interpreting')
-    const t = window.setTimeout(() => buildDraftFrom(value), 900)
-    timers.current.push(t)
+    mockCaptureService
+      .interpretText(value)
+      .then((result) => {
+        setDraftDescription(result.description)
+        setDraftAmount(result.amount !== null ? String(result.amount) : '')
+        setDraftCategory(
+          result.category
+            ? {
+                label: translateCategory(result.category),
+                value: result.category,
+              }
+            : null,
+        )
+        setInterpretIncomplete(
+          result.amount === null || result.category === null,
+        )
+        setDraftErrors({})
+        setState('preview')
+      })
+      .catch((err) => {
+        console.error('NLP interpretation failed', err)
+        setState('idle')
+      })
   }
-
-  // ---- microphone ---------------------------------------------------------
 
   function startRecording() {
     setText('')
@@ -125,7 +127,6 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
           timers.current.push(t1)
         }
         recognition.onerror = () => {
-          // Fall back to manual typing if speech fails.
           setState('idle')
         }
         recognition.onend = () => {
@@ -135,12 +136,11 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
         recognition.start()
         setState('recording')
         return
-      } catch {
-        /* fall through to simulation */
-      }
+      } catch {}
     }
 
     // Fallback: simulate a dictation so the flow stays demonstrable.
+    setShowSpeechWarning(true)
     setState('recording')
     const t = window.setTimeout(() => {
       setText(SIMULATED_DICTATION)
@@ -161,8 +161,6 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
     setState('idle')
   }
 
-  // ---- actions ------------------------------------------------------------
-
   function resetAll() {
     clearTimers()
     setText('')
@@ -171,6 +169,7 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
     setDraftCategory(null)
     setDraftErrors({})
     setInterpretIncomplete(false)
+    setShowSpeechWarning(false)
     setState('idle')
   }
 
@@ -232,6 +231,11 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
 
         {showPrompt && (
           <SpaceBetween size="m">
+            {showSpeechWarning && (
+              <Alert type="warning">
+                Simulando dictado (el navegador no soporta Web Speech API)
+              </Alert>
+            )}
             <PromptInput
               value={text}
               onChange={({ detail }) => setText(detail.value)}
@@ -266,7 +270,6 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
               }
             />
 
-            {/* Visible processing states */}
             {state === 'recording' && (
               <Box textAlign="center">
                 <StatusIndicator type="in-progress">
@@ -343,7 +346,6 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
                 </Alert>
               )}
 
-              {/* Amount, shown large for confidence */}
               <Box textAlign="center" padding={{ vertical: 's' }}>
                 <Box variant="awsui-key-label">Monto</Box>
                 <Box

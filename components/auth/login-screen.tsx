@@ -9,6 +9,7 @@ import Input from '@cloudscape-design/components/input'
 import Link from '@cloudscape-design/components/link'
 import SpaceBetween from '@cloudscape-design/components/space-between'
 
+import { useAuth } from '@/lib/auth'
 import { AuthShell } from './auth-shell'
 
 interface LoginScreenProps {
@@ -17,6 +18,7 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState('')
@@ -39,7 +41,22 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
     }
     if (!ok) return
     setLoading(true)
-    window.setTimeout(() => onLogin(), 600)
+    login(email, password)
+      .then(() => {
+        onLogin()
+      })
+      .catch((err: any) => {
+        setPasswordError(err.message || 'Error al iniciar sesión.')
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
+
+  function handleThirdParty(provider: string) {
+    setPasswordError(
+      `Simulando ingreso con ${provider} (no disponible en este entorno de prueba).`,
+    )
   }
 
   return (
@@ -127,12 +144,20 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
               style={{ display: 'flex', gap: 'var(--space-scaled-xs, 8px)' }}
             >
               <div style={{ flex: 1 }}>
-                <Button fullWidth iconName="contact" onClick={() => undefined}>
+                <Button
+                  fullWidth
+                  iconName="contact"
+                  onClick={() => handleThirdParty('Google')}
+                >
                   Google
                 </Button>
               </div>
               <div style={{ flex: 1 }}>
-                <Button fullWidth iconName="contact" onClick={() => undefined}>
+                <Button
+                  fullWidth
+                  iconName="contact"
+                  onClick={() => handleThirdParty('Apple')}
+                >
                   Apple
                 </Button>
               </div>

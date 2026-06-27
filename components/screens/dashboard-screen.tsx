@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import Badge from '@cloudscape-design/components/badge'
 import Box from '@cloudscape-design/components/box'
 import Button from '@cloudscape-design/components/button'
@@ -8,12 +9,14 @@ import Container from '@cloudscape-design/components/container'
 import Header from '@cloudscape-design/components/header'
 import Link from '@cloudscape-design/components/link'
 import SpaceBetween from '@cloudscape-design/components/space-between'
+import Spinner from '@cloudscape-design/components/spinner'
 import Table from '@cloudscape-design/components/table'
 
 import { useStore } from '@/lib/store'
 import { formatARS, formatDate } from '@/lib/format'
-import { CATEGORY_COLOR, computeMonthStats } from '@/lib/insights'
+import { CATEGORY_COLOR, useDashboardStats } from '@/lib/insights'
 import type { Expense } from '@/lib/types'
+import { translateCategory } from '@/lib/types'
 
 interface DashboardScreenProps {
   onCapture: () => void
@@ -77,11 +80,27 @@ export function DashboardScreen({
   onCapture,
   onSeeHistory,
 }: DashboardScreenProps) {
+  const { stats, loading } = useDashboardStats()
   const { expenses } = useStore()
-  const stats = computeMonthStats(expenses)
-  const recent = [...expenses]
-    .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-    .slice(0, 5)
+
+  const recent = useMemo(() => {
+    return [...expenses]
+      .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+      .slice(0, 5)
+  }, [expenses])
+
+  if (loading) {
+    return (
+      <Box textAlign="center" padding={{ vertical: 'xxl' }}>
+        <SpaceBetween size="m" alignItems="center">
+          <Spinner size="large" />
+          <Box variant="p" color="text-body-secondary">
+            Cargando datos...
+          </Box>
+        </SpaceBetween>
+      </Box>
+    )
+  }
 
   const hasData = stats.count > 0
 
@@ -99,7 +118,6 @@ export function DashboardScreen({
         ¿Cómo venís este mes?
       </Header>
 
-      {/* Hero total */}
       <Container>
         <SpaceBetween size="xs">
           <Box variant="awsui-key-label">Gastaste este mes</Box>
@@ -118,13 +136,12 @@ export function DashboardScreen({
 
       {hasData && (
         <ColumnLayout columns={2} variant="default">
-          {/* Breakdown */}
           <Container header={<Header variant="h2">Por categoría</Header>}>
             <SpaceBetween size="m">
               {stats.breakdown.map((b) => (
                 <CategoryBar
                   key={b.category}
-                  label={b.category}
+                  label={translateCategory(b.category)}
                   amount={b.total}
                   share={b.share}
                   color={CATEGORY_COLOR[b.category]}
@@ -133,7 +150,6 @@ export function DashboardScreen({
             </SpaceBetween>
           </Container>
 
-          {/* Light insights */}
           <Container
             header={<Header variant="h2">Para tener en cuenta</Header>}
           >
@@ -160,7 +176,7 @@ export function DashboardScreen({
                   <Box variant="span">
                     Lo que más pesa es{' '}
                     <Box variant="span" fontWeight="bold">
-                      {stats.topCategory.category}
+                      {translateCategory(stats.topCategory.category)}
                     </Box>
                     {`, con ${Math.round(stats.topCategory.share * 100)}% de tu gasto del mes.`}
                   </Box>
@@ -175,7 +191,6 @@ export function DashboardScreen({
         </ColumnLayout>
       )}
 
-      {/* Recent movements */}
       <Table<Expense>
         variant="container"
         items={recent}
@@ -205,7 +220,7 @@ export function DashboardScreen({
           {
             id: 'category',
             header: 'Categoría',
-            cell: (e) => <Badge>{e.category}</Badge>,
+            cell: (e) => <Badge>{translateCategory(e.category)}</Badge>,
             width: 150,
           },
           {

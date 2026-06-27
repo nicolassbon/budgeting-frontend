@@ -8,6 +8,7 @@ import Input from '@cloudscape-design/components/input'
 import Link from '@cloudscape-design/components/link'
 import SpaceBetween from '@cloudscape-design/components/space-between'
 
+import { useAuth } from '@/lib/auth'
 import { AuthShell } from './auth-shell'
 
 interface SignupScreenProps {
@@ -16,6 +17,7 @@ interface SignupScreenProps {
 }
 
 export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
+  const { signup } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -35,7 +37,16 @@ export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
     setErrors(next)
     if (Object.keys(next).length > 0) return
     setLoading(true)
-    window.setTimeout(() => onSignup(), 600)
+    signup(email, password)
+      .then(() => {
+        onSignup()
+      })
+      .catch((err: any) => {
+        setErrors({ password: err.message || 'Error al crear cuenta.' })
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return (

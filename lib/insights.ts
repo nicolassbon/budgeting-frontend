@@ -1,14 +1,16 @@
+import { useMemo } from 'react'
 import {
   colorChartsPaletteCategorical1,
   colorChartsPaletteCategorical2,
   colorChartsPaletteCategorical3,
 } from '@cloudscape-design/design-tokens'
 import { CATEGORIES, type Category, type Expense } from './types'
+import { useStore } from './store'
 
 export const CATEGORY_COLOR: Record<Category, string> = {
-  Supermercado: colorChartsPaletteCategorical1,
-  Farmacia: colorChartsPaletteCategorical2,
-  Auto: colorChartsPaletteCategorical3,
+  GROCERIES: colorChartsPaletteCategorical1,
+  PHARMA: colorChartsPaletteCategorical2,
+  AUTO: colorChartsPaletteCategorical3,
 }
 
 export interface CategoryBreakdown {
@@ -82,4 +84,14 @@ export function computeMonthStats(
     topCategory,
     monthLabel: `${MONTHS[ref.getMonth()]} ${ref.getFullYear()}`,
   }
+}
+
+export function useDashboardStats(): { stats: MonthStats; loading: boolean } {
+  const { expenses, loading } = useStore()
+
+  const stats = useMemo(() => {
+    return computeMonthStats(expenses)
+  }, [expenses])
+
+  return { stats, loading }
 }
