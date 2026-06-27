@@ -1,0 +1,7 @@
+.next
+.agents/skills
+node_modules
+dist
+build
+pnpm-lock.yaml
+tsconfig.tsbuildinfo
