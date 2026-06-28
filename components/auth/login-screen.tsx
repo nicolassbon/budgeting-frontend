@@ -1,14 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Box from '@cloudscape-design/components/box'
-import Button from '@cloudscape-design/components/button'
-import Form from '@cloudscape-design/components/form'
-import FormField from '@cloudscape-design/components/form-field'
-import Input from '@cloudscape-design/components/input'
-import Link from '@cloudscape-design/components/link'
-import SpaceBetween from '@cloudscape-design/components/space-between'
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/auth'
 import { AuthShell } from './auth-shell'
 
@@ -27,26 +23,32 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
 
   function submit() {
     let ok = true
+
     if (!email.trim() || !email.includes('@')) {
       setEmailError('Ingresá un email válido.')
       ok = false
     } else {
       setEmailError('')
     }
+
     if (!password) {
       setPasswordError('Ingresá tu contraseña.')
       ok = false
     } else {
       setPasswordError('')
     }
+
     if (!ok) return
+
     setLoading(true)
     login(email, password)
       .then(() => {
         onLogin()
       })
-      .catch((err: any) => {
-        setPasswordError(err.message || 'Error al iniciar sesión.')
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : 'Error al iniciar sesión.'
+        setPasswordError(message)
       })
       .finally(() => {
         setLoading(false)
@@ -61,109 +63,107 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
 
   return (
     <AuthShell
-      title="Hola de nuevo"
+      title="Hola de nuevo."
       subtitle="Entrá para seguir registrando tus gastos."
       footer={
         <span>
           ¿Todavía no tenés cuenta?{' '}
-          <Link onFollow={onGoToSignup} variant="primary">
+          <button
+            className="font-medium text-primary underline-offset-4 hover:underline"
+            onClick={onGoToSignup}
+          >
             Creá una
-          </Link>
+          </button>
         </span>
       }
     >
-      <form onSubmit={(e) => e.preventDefault()}>
-        <Form
-          actions={
+      <form
+        className="space-y-5"
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
+        <div className="space-y-2">
+          <label htmlFor="login-email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="login-email"
+            type="email"
+            value={email}
+            placeholder="vos@ejemplo.com"
+            onChange={(event) => setEmail(event.target.value)}
+            aria-invalid={emailError ? 'true' : 'false'}
+            aria-describedby={emailError ? 'login-email-error' : undefined}
+          />
+          {emailError && (
+            <p id="login-email-error" className="text-sm text-destructive">
+              {emailError}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="login-password" className="text-sm font-medium">
+              Contraseña
+            </label>
+            <button
+              type="button"
+              className="text-sm text-primary underline-offset-4 hover:underline"
+            >
+              ¿La olvidaste?
+            </button>
+          </div>
+          <Input
+            id="login-password"
+            type="password"
+            value={password}
+            placeholder="Tu contraseña"
+            onChange={(event) => setPassword(event.target.value)}
+            aria-invalid={passwordError ? 'true' : 'false'}
+            aria-describedby={
+              passwordError ? 'login-password-error' : undefined
+            }
+          />
+          {passwordError && (
+            <p id="login-password-error" className="text-sm text-destructive">
+              {passwordError}
+            </p>
+          )}
+        </div>
+
+        {passwordError.includes('Simulando ingreso') && (
+          <Alert variant="info">
+            <AlertTitle>Ingreso social</AlertTitle>
+            <AlertDescription>{passwordError}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button type="submit" variant="default" className="w-full" disabled={loading}>
+          {loading ? 'Entrando…' : 'Iniciar sesión'}
+        </Button>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            o continuá con
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <Button
-              variant="primary"
-              fullWidth
-              loading={loading}
-              onClick={submit}
+              variant="outline"
+              onClick={() => handleThirdParty('Google')}
             >
-              Iniciar sesión
+              Google
             </Button>
-          }
-        >
-          <SpaceBetween size="l">
-            <FormField label="Email" errorText={emailError}>
-              <Input
-                type="email"
-                value={email}
-                placeholder="vos@ejemplo.com"
-                onChange={({ detail }) => setEmail(detail.value)}
-              />
-            </FormField>
-
-            <FormField
-              label="Contraseña"
-              errorText={passwordError}
-              secondaryControl={
-                <Link variant="info" onFollow={() => undefined}>
-                  ¿La olvidaste?
-                </Link>
-              }
-            >
-              <Input
-                type="password"
-                value={password}
-                placeholder="Tu contraseña"
-                onChange={({ detail }) => setPassword(detail.value)}
-              />
-            </FormField>
-
-            <Box>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-scaled-s, 12px)',
-                  color: 'var(--color-text-body-secondary, #5f6b7a)',
-                  fontSize: 'var(--font-size-body-s, 12px)',
-                }}
-              >
-                <span
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: 'var(--color-border-divider-default, #c6c6cd)',
-                  }}
-                />
-                o continuá con
-                <span
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: 'var(--color-border-divider-default, #c6c6cd)',
-                  }}
-                />
-              </div>
-            </Box>
-
-            <div
-              style={{ display: 'flex', gap: 'var(--space-scaled-xs, 8px)' }}
-            >
-              <div style={{ flex: 1 }}>
-                <Button
-                  fullWidth
-                  iconName="contact"
-                  onClick={() => handleThirdParty('Google')}
-                >
-                  Google
-                </Button>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Button
-                  fullWidth
-                  iconName="contact"
-                  onClick={() => handleThirdParty('Apple')}
-                >
-                  Apple
-                </Button>
-              </div>
-            </div>
-          </SpaceBetween>
-        </Form>
+            <Button variant="outline" onClick={() => handleThirdParty('Apple')}>
+              Apple
+            </Button>
+          </div>
+        </div>
       </form>
     </AuthShell>
   )

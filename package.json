@@ -13,12 +13,13 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@cloudscape-design/components": "3.0.1307",
-    "@cloudscape-design/design-tokens": "3.0.92",
-    "@cloudscape-design/global-styles": "1.0.59",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.542.0",
     "next": "15.5.19",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -32,7 +33,11 @@
     "eslint-config-next": "15.5.19",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
     "prettier": "^3.8.5",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "5.7.2",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.9"

@@ -1,28 +1,87 @@
-/*
- * Cloudscape establishes its own typography (Open Sans), color, and spacing
- * baseline through "@cloudscape-design/global-styles/index.css", imported in
- * app/layout.tsx. Keep this file minimal: only the host-page wiring Cloudscape
- * needs (full-height root so AppLayout can fill the viewport) plus the page
- * background token. Do not override Cloudscape component styling here.
- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+@layer base {
+  :root {
+    --background: #fafafa;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --popover: #ffffff;
+    --popover-foreground: #09090b;
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #09090b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #f4f4f5;
+    --accent-foreground: #09090b;
+    --destructive: #ee0000;
+    --destructive-foreground: #ffffff;
+    --border: #e5e5e5;
+    --input: #ffffff;
+    --ring: #5e69d1;
+    --radius: 8px;
+
+    /* Hairline border-based lifts of Linear */
+    --shadow-l1: 0 0 0 1px #e4e4e7;
+    --shadow-l2: 0 0 0 1px #d4d4d8;
+    --shadow-l3: 0 0 0 1px #e4e4e7;
+    --shadow-l4: 0 0 0 1px #e4e4e7;
+    --shadow-l5: 0 0 0 1px #c4c4c7;
+  }
+
+  .dark {
+    --background: #010102;
+    --foreground: #f7f8f8;
+    --card: #0f1011;
+    --card-foreground: #f7f8f8;
+    --popover: #0f1011;
+    --popover-foreground: #f7f8f8;
+    --primary: #5e6ad2;
+    --primary-foreground: #ffffff;
+    --secondary: #0f1011;
+    --secondary-foreground: #f7f8f8;
+    --muted: #141516;
+    --muted-foreground: #8a8f98;
+    --accent: #141516;
+    --accent-foreground: #f7f8f8;
+    --destructive: #ee0000;
+    --destructive-foreground: #ffffff;
+    --border: #23252a;
+    --input: #0f1011;
+    --ring: #5e69d1;
+    --radius: 8px;
+
+    /* Hairline border-based lifts of Linear */
+    --shadow-l1: 0 0 0 1px #23252a;
+    --shadow-l2: 0 0 0 1px #34343a;
+    --shadow-l3: 0 0 0 1px #23252a;
+    --shadow-l4: 0 0 0 1px #23252a;
+    --shadow-l5: 0 0 0 1px #3e3e44;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen font-sans bg-background text-foreground antialiased;
+  }
+
+  a {
+    @apply text-inherit;
+  }
 }
 
-body {
-  background-color: var(--color-background-layout-main-q409pi, #f2f3f3);
-}
-
-body.awsui-dark-mode {
-  background-color: var(--color-background-layout-main-q409pi, #0f1b2a);
-}
-
-/* Next.js App Router mounts content into this wrapper; let it fill height. */
-#__next,
-[data-nextjs-scroll-focus-boundary] {
-  height: 100%;
+@layer utilities {
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring;
+  }
 }

@@ -3,10 +3,10 @@ strict_tdd: true
 
 context: |
   Tech stack: Next.js 15 App Router, React 18, TypeScript 5.7, pnpm.
-  UI: AWS Cloudscape Design System.
+  UI: shadcn/ui + Tailwind CSS foundation.
   Architecture: single-route client shell with mocked auth and in-memory React Context store.
   Testing: Vitest + JSDOM, Testing Library, ESLint 9, Prettier 3, tsc --noEmit.
-  Conventions: Cloudscape tokens over raw CSS; no Tailwind/shadcn; es-AR UI copy.
+  Conventions: Tailwind utilities + shared ui primitives; es-AR UI copy.
 
 testing:
   detected: 2026-06-27
@@ -51,7 +51,7 @@ rules:
     - Write scenarios in Given/When/Then form.
   design:
     - Respect the single-page shell and current mock auth/store boundaries.
-    - Preserve Cloudscape integration and design-token-based styling.
+    - Preserve the shadcn/Tailwind foundation and shared design tokens.
   tasks:
     - Group tasks by phase and keep each task reviewable in one session.
   apply:

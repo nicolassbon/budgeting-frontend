@@ -1,22 +1,35 @@
 'use client'
 
 import { useMemo } from 'react'
-import Badge from '@cloudscape-design/components/badge'
-import Box from '@cloudscape-design/components/box'
-import Button from '@cloudscape-design/components/button'
-import ColumnLayout from '@cloudscape-design/components/column-layout'
-import Container from '@cloudscape-design/components/container'
-import Header from '@cloudscape-design/components/header'
-import Link from '@cloudscape-design/components/link'
-import SpaceBetween from '@cloudscape-design/components/space-between'
-import Spinner from '@cloudscape-design/components/spinner'
-import Table from '@cloudscape-design/components/table'
 
-import { useStore } from '@/lib/store'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { formatARS, formatDate } from '@/lib/format'
 import { CATEGORY_COLOR, useDashboardStats } from '@/lib/insights'
-import type { Expense } from '@/lib/types'
-import { translateCategory } from '@/lib/types'
+import { useStore } from '@/lib/store'
+import { translateCategory, type Category } from '@/lib/types'
+import { cn } from '@/lib/utils'
+
+const CATEGORY_STYLES: Record<Category, string> = {
+  GROCERIES: 'bg-indigo-500/15 text-indigo-400 border-transparent',
+  AUTO: 'bg-emerald-500/15 text-emerald-400 border-transparent',
+  PHARMA: 'bg-rose-500/15 text-rose-400 border-transparent',
+}
 
 interface DashboardScreenProps {
   onCapture: () => void
@@ -35,40 +48,23 @@ function CategoryBar({
   color: string
 }) {
   const pct = Math.round(share * 100)
+
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 'var(--space-scaled-s, 12px)',
-          marginBottom: 'var(--space-scaled-xxs, 4px)',
-        }}
-      >
-        <Box variant="span" fontWeight="bold">
-          {label}
-        </Box>
-        <Box variant="span" color="text-body-secondary" fontSize="body-s">
-          {`${formatARS(amount)} · ${pct}%`}
-        </Box>
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-sans font-medium">{label}</span>
+        <span className="text-sm text-muted-foreground font-sans">
+          <span className="font-mono">{formatARS(amount)}</span>
+          {' · '}
+          <span className="font-mono">{pct}%</span>
+        </span>
       </div>
-      <div
-        role="presentation"
-        style={{
-          height: 10,
-          borderRadius: 'var(--border-radius-badge, 4px)',
-          background: 'var(--color-background-input-disabled, #e9ebed)',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="h-2 rounded-md bg-secondary border border-border overflow-hidden">
         <div
+          className="h-full rounded-md transition-all"
           style={{
             width: `${Math.max(pct, share > 0 ? 2 : 0)}%`,
-            height: '100%',
-            background: color,
-            borderRadius: 'var(--border-radius-badge, 4px)',
-            transition: 'width 240ms ease',
+            backgroundColor: color,
           }}
         />
       </div>
@@ -91,160 +87,151 @@ export function DashboardScreen({
 
   if (loading) {
     return (
-      <Box textAlign="center" padding={{ vertical: 'xxl' }}>
-        <SpaceBetween size="m" alignItems="center">
-          <Spinner size="large" />
-          <Box variant="p" color="text-body-secondary">
-            Cargando datos...
-          </Box>
-        </SpaceBetween>
-      </Box>
+      <Card>
+        <CardContent className="flex items-center justify-center py-10 text-muted-foreground">
+          Cargando datos...
+        </CardContent>
+      </Card>
     )
   }
 
   const hasData = stats.count > 0
 
   return (
-    <SpaceBetween size="l">
-      <Header
-        variant="h1"
-        description={`Tu resumen de ${stats.monthLabel}.`}
-        actions={
-          <Button variant="primary" iconName="microphone" onClick={onCapture}>
-            Capturar gasto
-          </Button>
-        }
-      >
-        ¿Cómo venís este mes?
-      </Header>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <Badge variant="success" className="w-fit">
+            Resumen del mes
+          </Badge>
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight tracking-[-0.6px]">
+              Cómo venís este mes.
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {`Tu resumen de ${stats.monthLabel}.`}
+            </p>
+          </div>
+        </div>
 
-      <Container>
-        <SpaceBetween size="xs">
-          <Box variant="awsui-key-label">Gastaste este mes</Box>
-          <Box variant="h1" fontSize="display-l">
+        <Button onClick={onCapture}>Capturar gasto</Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardDescription>Gastaste este mes</CardDescription>
+          <CardTitle className="text-4xl font-sans font-black text-foreground dark:text-[#f7f8f8]">
             {formatARS(stats.total)}
-          </Box>
-          <Box color="text-body-secondary">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
             {hasData
               ? `${stats.count} movimiento${stats.count === 1 ? '' : 's'} · promedio ${formatARS(
                   stats.average,
                 )}`
               : 'Todavía no registraste movimientos este mes.'}
-          </Box>
-        </SpaceBetween>
-      </Container>
+          </p>
+        </CardContent>
+      </Card>
 
       {hasData && (
-        <ColumnLayout columns={2} variant="default">
-          <Container header={<Header variant="h2">Por categoría</Header>}>
-            <SpaceBetween size="m">
-              {stats.breakdown.map((b) => (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Por categoría</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {stats.breakdown.map((item) => (
                 <CategoryBar
-                  key={b.category}
-                  label={translateCategory(b.category)}
-                  amount={b.total}
-                  share={b.share}
-                  color={CATEGORY_COLOR[b.category]}
+                  key={item.category}
+                  label={translateCategory(item.category)}
+                  amount={item.total}
+                  share={item.share}
+                  color={CATEGORY_COLOR[item.category]}
                 />
               ))}
-            </SpaceBetween>
-          </Container>
+            </CardContent>
+          </Card>
 
-          <Container
-            header={<Header variant="h2">Para tener en cuenta</Header>}
-          >
-            <SpaceBetween size="m">
+          <Card>
+            <CardHeader>
+              <CardTitle>Para tener en cuenta</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
               {stats.topCategory && (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 'var(--space-scaled-s, 12px)',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      marginTop: 4,
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      flexShrink: 0,
-                      background: CATEGORY_COLOR[stats.topCategory.category],
-                    }}
-                  />
-                  <Box variant="span">
-                    Lo que más pesa es{' '}
-                    <Box variant="span" fontWeight="bold">
-                      {translateCategory(stats.topCategory.category)}
-                    </Box>
-                    {`, con ${Math.round(stats.topCategory.share * 100)}% de tu gasto del mes.`}
-                  </Box>
-                </div>
+                <p>
+                  Lo que más pesa es{' '}
+                  <span className="font-semibold text-foreground">
+                    {translateCategory(stats.topCategory.category)}
+                  </span>
+                  {`, con ${Math.round(stats.topCategory.share * 100)}% de tu gasto del mes.`}
+                </p>
               )}
-              <Box variant="span" color="text-body-secondary">
+              <p>
                 {`Vas a un promedio de ${formatARS(stats.average)} por movimiento. `}
                 Registrar a tiempo te ayuda a que el número no te sorprenda.
-              </Box>
-            </SpaceBetween>
-          </Container>
-        </ColumnLayout>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      <Table<Expense>
-        variant="container"
-        items={recent}
-        trackBy="id"
-        header={
-          <Header
-            variant="h2"
-            counter={hasData ? `(${expenses.length})` : undefined}
-            actions={<Link onFollow={onSeeHistory}>Ver historial</Link>}
-          >
-            Movimientos recientes
-          </Header>
-        }
-        columnDefinitions={[
-          {
-            id: 'date',
-            header: 'Fecha',
-            cell: (e) => formatDate(e.date),
-            width: 120,
-          },
-          {
-            id: 'description',
-            header: 'Descripción',
-            cell: (e) => e.description,
-            isRowHeader: true,
-          },
-          {
-            id: 'category',
-            header: 'Categoría',
-            cell: (e) => <Badge>{translateCategory(e.category)}</Badge>,
-            width: 150,
-          },
-          {
-            id: 'amount',
-            header: 'Monto',
-            cell: (e) => (
-              <Box textAlign="right" fontWeight="bold">
-                {formatARS(e.amount)}
-              </Box>
-            ),
-            width: 140,
-          },
-        ]}
-        empty={
-          <Box textAlign="center" color="inherit" padding={{ vertical: 'l' }}>
-            <SpaceBetween size="s">
-              <b>Todavía no registraste movimientos</b>
-              <Button iconName="microphone" onClick={onCapture}>
-                Capturar tu primer gasto
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      />
-    </SpaceBetween>
+      <Card>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>Movimientos recientes</CardTitle>
+            <CardDescription>
+              {hasData
+                ? `${expenses.length} movimientos registrados.`
+                : 'Todavía no hay movimientos.'}
+            </CardDescription>
+          </div>
+          <Button variant="outline" onClick={onSeeHistory}>
+            Ver historial
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {recent.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Fecha</TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Descripción</TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Categoría</TableHead>
+                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">Monto</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recent.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{formatDate(expense.date)}</TableCell>
+                    <TableCell className="font-medium">
+                      {expense.description}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={cn("rounded-xs", CATEGORY_STYLES[expense.category])}
+                      >
+                        {translateCategory(expense.category)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-foreground dark:text-[#f7f8f8]">
+                      {formatARS(expense.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="space-y-3 rounded-xl border border-dashed border-border p-6 text-center">
+              <p className="font-medium">Todavía no registraste movimientos</p>
+              <Button onClick={onCapture}>Capturar tu primer gasto</Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

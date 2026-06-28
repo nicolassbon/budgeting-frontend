@@ -1,16 +1,11 @@
 import { useMemo } from 'react'
-import {
-  colorChartsPaletteCategorical1,
-  colorChartsPaletteCategorical2,
-  colorChartsPaletteCategorical3,
-} from '@cloudscape-design/design-tokens'
 import { CATEGORIES, type Category, type Expense } from './types'
 import { useStore } from './store'
 
 export const CATEGORY_COLOR: Record<Category, string> = {
-  GROCERIES: colorChartsPaletteCategorical1,
-  PHARMA: colorChartsPaletteCategorical2,
-  AUTO: colorChartsPaletteCategorical3,
+  GROCERIES: '#5e6ad2',
+  PHARMA: '#828fff',
+  AUTO: '#7a7fad',
 }
 
 export interface CategoryBreakdown {

@@ -4,7 +4,7 @@
 
 This document specifies the comprehensive Product Requirements and System Architecture for the Budgeting MVP. Budgeting is an intelligent expense tracking application designed to minimize the day-to-day friction of financial logging.
 
-The product combines a **Next.js** (App Router) frontend styled with **AWS Cloudscape Design System** and a **Java Spring Boot / Spring AI** backend. It integrates advanced AI capabilities (voice transcription and natural language interpretation) into a controlled, user-approved logging flow.
+The product combines a **Next.js** (App Router) frontend styled with a **Linear-inspired stark styling design system (defined in DESIGN.md)** and a **Java Spring Boot / Spring AI** backend. It integrates advanced AI capabilities (voice transcription and natural language interpretation) into a controlled, user-approved logging flow.
 
 ---
 

@@ -5,7 +5,8 @@ Compact guidance for AI sessions working in this repo. Read before editing.
 ## Stack
 
 - **Next.js 15.5.19 (App Router) + React 18.3.1 + TypeScript 5.7.2 (strict)**, package manager **pnpm**.
-- **UI library is AWS Cloudscape Design System** (`@cloudscape-design/components`), NOT shadcn/ui and NOT Tailwind. There is no `tailwind.config.*`, no `postcss.config.*`, no `components.json` in this repo.
+- **UI foundation is a Linear-inspired stark styling design system defined in [DESIGN.md](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/DESIGN.md)**. Adherence to [DESIGN.md](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/DESIGN.md) is mandatory for any visual changes.
+- **AWS Cloudscape is deprecated and being removed.** Do not introduce new `@cloudscape-design/*` dependencies or components.
 - `package.json` `name` is still `cloudscape-starter` (cosmetic leftover from the starter template; the product is `budgeting`).
 
 ### Applicable project skills
@@ -33,12 +34,12 @@ pnpm format:check # check formatting
 - pnpm build approvals for `sharp` and `unrs-resolver` are committed in `pnpm-workspace.yaml`. If a future dependency adds install scripts, run `pnpm approve-builds` and commit the updated approvals.
 - Required order when verifying a change: `pnpm format:check` → `pnpm lint` → `pnpm test` → `pnpm exec tsc --noEmit` → `pnpm build`.
 
-## Cloudscape wiring (do not break)
+## Design system wiring
 
-- `next.config.mjs` MUST keep `transpilePackages` for `@cloudscape-design/components`, `@cloudscape-design/component-toolkit`, and `@cloudscape-design/board-components`. Next cannot bundle Cloudscape without this.
-- `@cloudscape-design/global-styles/index.css` is imported **once**, in `app/layout.tsx`. Do not re-import it elsewhere.
-- `app/globals.css` only contains host-page wiring (full-height root, layout background token). **Do not override Cloudscape component styles there.** Use Cloudscape design tokens, not raw CSS, for theming.
-- Dark mode is toggled imperatively via `applyMode(Mode.Dark | Mode.Light)` plus the `body.awsui-dark-mode` class (see `components/app-frame.tsx`). There is no Tailwind `dark:` variant.
+- Tailwind layers and design tokens live in `app/globals.css`. Extend them there instead of scattering raw global CSS overrides.
+- Reusable primitives live under `components/ui/` and should stay compatible with shadcn/ui conventions (`cn`, class-variance-authority, Tailwind utilities).
+- Dark mode uses the Tailwind `dark` class on `document.documentElement` (see `lib/theme.ts` and `components/app-frame.tsx`).
+- Favor semantic HTML plus Tailwind utilities for layout; do not reintroduce Cloudscape layout assumptions.
 
 ## Architecture
 
@@ -69,7 +70,6 @@ From `lib/types.ts` and `docs/PRD.md`:
 
 - `tsconfig.json` uses `"moduleResolution": "bundler"`, `strict: true`, `incremental: true`, `noEmit: true`. `tsconfig.tsbuildinfo` is generated; safe to delete and regenerate.
 - `.next/` caches generated route types. If `tsc --noEmit` reports stale imports after moving routes/components, delete `.next/` and re-run.
-- No `opencode.json`, no `.github/` workflows, no pre-commit hooks. The repo currently has no commits on `main`.
 
 ## Reference docs
 

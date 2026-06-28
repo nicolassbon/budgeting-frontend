@@ -1,23 +1,21 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Alert from '@cloudscape-design/components/alert'
-import Badge from '@cloudscape-design/components/badge'
-import Box from '@cloudscape-design/components/box'
-import Button from '@cloudscape-design/components/button'
-import Container from '@cloudscape-design/components/container'
-import FormField from '@cloudscape-design/components/form-field'
-import Header from '@cloudscape-design/components/header'
-import Input from '@cloudscape-design/components/input'
-import Link from '@cloudscape-design/components/link'
-import PromptInput from '@cloudscape-design/components/prompt-input'
-import Select, { SelectProps } from '@cloudscape-design/components/select'
-import SpaceBetween from '@cloudscape-design/components/space-between'
-import Spinner from '@cloudscape-design/components/spinner'
-import StatusIndicator from '@cloudscape-design/components/status-indicator'
 
-import { useStore } from '@/lib/store'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { formatARS, mockCaptureService } from '@/lib/format'
+import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, translateCategory } from '@/lib/types'
 
 type CaptureState =
@@ -28,13 +26,7 @@ type CaptureState =
   | 'preview'
   | 'saving'
 
-const CATEGORY_OPTIONS: SelectProps.Option[] = CATEGORIES.map((c) => ({
-  label: translateCategory(c),
-  value: c,
-}))
-
 const EXAMPLES = ['70 mil en el super', 'Farmacia 12.300', 'Cargué nafta 45000']
-
 const SIMULATED_DICTATION = 'Gasté 32500 en el super'
 
 interface CaptureScreenProps {
@@ -51,30 +43,34 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
 
   const [draftDescription, setDraftDescription] = useState('')
   const [draftAmount, setDraftAmount] = useState('')
-  const [draftCategory, setDraftCategory] = useState<SelectProps.Option | null>(
-    null,
-  )
+  const [draftCategory, setDraftCategory] = useState<Category | ''>('')
   const [draftErrors, setDraftErrors] = useState<{
     amount?: string
     category?: string
     description?: string
   }>({})
   const [interpretIncomplete, setInterpretIncomplete] = useState(false)
+  const [helpExpanded, setHelpExpanded] = useState(false)
 
   const timers = useRef<number[]>([])
-  const recognitionRef = useRef<any>(null)
+  const recognitionRef = useRef<{ stop?: () => void } | null>(null)
 
   const clearTimers = useCallback(() => {
-    timers.current.forEach((t) => window.clearTimeout(t))
+    timers.current.forEach((timerId) => window.clearTimeout(timerId))
     timers.current = []
   }, [])
 
   useEffect(() => {
+    const recognition = recognitionRef.current
+
     return () => {
       clearTimers()
+
       try {
-        recognitionRef.current?.stop?.()
-      } catch {}
+        recognition?.stop?.()
+      } catch {
+        // noop
+      }
     }
   }, [clearTimers])
 
@@ -87,22 +83,15 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
       .then((result) => {
         setDraftDescription(result.description)
         setDraftAmount(result.amount !== null ? String(result.amount) : '')
-        setDraftCategory(
-          result.category
-            ? {
-                label: translateCategory(result.category),
-                value: result.category,
-              }
-            : null,
-        )
+        setDraftCategory(result.category ?? '')
         setInterpretIncomplete(
           result.amount === null || result.category === null,
         )
         setDraftErrors({})
         setState('preview')
       })
-      .catch((err) => {
-        console.error('NLP interpretation failed', err)
+      .catch((error) => {
+        console.error('NLP interpretation failed', error)
         setState('idle')
       })
   }
@@ -123,40 +112,46 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
           const transcript = event.results?.[0]?.[0]?.transcript ?? ''
           setText(transcript)
           setState('transcribing')
-          const t1 = window.setTimeout(() => interpret(transcript), 700)
-          timers.current.push(t1)
+          const timerId = window.setTimeout(() => interpret(transcript), 700)
+          timers.current.push(timerId)
         }
         recognition.onerror = () => {
           setState('idle')
         }
         recognition.onend = () => {
-          setState((s) => (s === 'recording' ? 'idle' : s))
+          setState((current) => (current === 'recording' ? 'idle' : current))
         }
         recognitionRef.current = recognition
         recognition.start()
         setState('recording')
         return
-      } catch {}
+      } catch {
+        // Fall back to the local simulation below.
+      }
     }
 
-    // Fallback: simulate a dictation so the flow stays demonstrable.
     setShowSpeechWarning(true)
     setState('recording')
-    const t = window.setTimeout(() => {
+    const firstTimer = window.setTimeout(() => {
       setText(SIMULATED_DICTATION)
       setState('transcribing')
-      const t2 = window.setTimeout(() => interpret(SIMULATED_DICTATION), 700)
-      timers.current.push(t2)
+      const secondTimer = window.setTimeout(
+        () => interpret(SIMULATED_DICTATION),
+        700,
+      )
+      timers.current.push(secondTimer)
     }, 1600)
-    timers.current.push(t)
+
+    timers.current.push(firstTimer)
   }
 
   function stopRecording() {
     try {
       recognitionRef.current?.stop?.()
     } catch {
-      /* noop */
+      // noop
     }
+
     clearTimers()
     setState('idle')
   }
@@ -166,7 +161,7 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
     setText('')
     setDraftDescription('')
     setDraftAmount('')
-    setDraftCategory(null)
+    setDraftCategory('')
     setDraftErrors({})
     setInterpretIncomplete(false)
     setShowSpeechWarning(false)
@@ -177,7 +172,7 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
     clearTimers()
     setDraftDescription(text.trim())
     setDraftAmount('')
-    setDraftCategory(null)
+    setDraftCategory('')
     setInterpretIncomplete(false)
     setDraftErrors({})
     setState('preview')
@@ -185,25 +180,29 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
 
   function saveDraft() {
     const next: typeof draftErrors = {}
-    const parsed = Number(draftAmount)
+    const parsedAmount = Number(draftAmount)
+
     if (!draftDescription.trim()) next.description = 'Agregá una descripción.'
-    if (!draftAmount || Number.isNaN(parsed) || parsed <= 0)
+    if (!draftAmount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       next.amount = 'Ingresá un monto mayor a 0.'
+    }
     if (!draftCategory) next.category = 'Elegí una categoría.'
+
     setDraftErrors(next)
     if (Object.keys(next).length > 0) return
 
     setState('saving')
-    const t = window.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
       addExpense({
         description: draftDescription.trim(),
-        amount: Math.round(parsed),
-        category: draftCategory!.value as Category,
+        amount: Math.round(parsedAmount),
+        category: draftCategory as Category,
       })
       resetAll()
       onSaved()
     }, 700)
-    timers.current.push(t)
+
+    timers.current.push(timerId)
   }
 
   const busy =
@@ -214,239 +213,270 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
   const showDraft = state === 'preview' || state === 'saving'
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <SpaceBetween size="xl">
-        <Box textAlign="center" padding={{ top: 'l' }}>
-          <SpaceBetween size="xs" alignItems="center">
-            <Badge color="green">Captura con IA</Badge>
-            <Box variant="h1" fontSize="display-l">
-              Contame o dictá tu gasto
-            </Box>
-            <Box variant="p" color="text-body-secondary" fontSize="heading-s">
-              Escribilo en una línea o usá el micrófono. Te armamos un borrador
-              para que lo revises antes de guardar.
-            </Box>
-          </SpaceBetween>
-        </Box>
+    <div className="mx-auto max-w-[600px] w-full space-y-6">
+      <div className="space-y-3 text-center">
+        <Badge variant="success" className="mx-auto w-fit">
+          Captura con IA
+        </Badge>
+        <div className="space-y-2">
+          <h2 className="font-sans text-3xl font-semibold tracking-tight tracking-[-0.02em]">
+            Contame o dictá tu gasto.
+          </h2>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Escribilo en una línea o usá el micrófono. Te armamos un borrador
+            para que lo revises antes de guardar.
+          </p>
+        </div>
+      </div>
 
-        {showPrompt && (
-          <SpaceBetween size="m">
+      {showPrompt && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Describí tu gasto</CardTitle>
+            <CardDescription>Ej: 70 mil en el super</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {showSpeechWarning && (
-              <Alert type="warning">
-                Simulando dictado (el navegador no soporta Web Speech API)
+              <Alert variant="warning">
+                <AlertTitle>Dictado simulado</AlertTitle>
+                <AlertDescription>
+                  Simulando dictado porque el navegador no soporta la captura de
+                  voz.
+                </AlertDescription>
               </Alert>
             )}
-            <PromptInput
+
+            <Textarea
               value={text}
-              onChange={({ detail }) => setText(detail.value)}
-              onAction={({ detail }) => interpret(detail.value)}
+              onChange={(event) => setText(event.target.value)}
               placeholder="Ej: 70 mil en el super"
-              actionButtonIconName="send"
-              actionButtonAriaLabel="Interpretar gasto"
-              disableActionButton={busy || !text.trim()}
               disabled={busy}
-              minRows={2}
-              maxRows={6}
-              ariaLabel="Describí tu gasto"
-              secondaryActions={
-                state === 'recording' ? (
-                  <Button
-                    iconName="microphone-off"
-                    variant="primary"
-                    onClick={stopRecording}
-                  >
-                    Detener
-                  </Button>
-                ) : (
-                  <Button
-                    iconName="microphone"
-                    variant="normal"
-                    onClick={startRecording}
-                    disabled={busy}
-                  >
-                    Dictar
-                  </Button>
-                )
-              }
+              aria-label="Describí tu gasto"
+              rows={3}
+              className="min-h-[80px]"
             />
 
-            {state === 'recording' && (
-              <Box textAlign="center">
-                <StatusIndicator type="in-progress">
-                  Grabando… hablá con naturalidad
-                </StatusIndicator>
-              </Box>
-            )}
-            {state === 'transcribing' && (
-              <Box textAlign="center">
-                <StatusIndicator type="loading">
-                  Transcribiendo…
-                </StatusIndicator>
-              </Box>
-            )}
-            {state === 'interpreting' && (
-              <Box textAlign="center">
-                <StatusIndicator type="loading">
-                  Interpretando tu gasto…
-                </StatusIndicator>
-              </Box>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={() => interpret(text)}
+                disabled={busy || !text.trim()}
+              >
+                Interpretar gasto
+              </Button>
+
+              {state === 'recording' ? (
+                <Button variant="secondary" onClick={stopRecording}>
+                  Detener
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={startRecording}
+                  disabled={busy}
+                >
+                  Dictar
+                </Button>
+              )}
+            </div>
+
+            {state !== 'idle' && (
+              <p className="text-sm text-muted-foreground">
+                {state === 'recording' && 'Grabando… hablá con naturalidad'}
+                {state === 'transcribing' && 'Transcribiendo…'}
+                {state === 'interpreting' && 'Interpretando tu gasto…'}
+              </p>
             )}
 
             {state === 'idle' && (
-              <Box textAlign="center">
-                <SpaceBetween size="xs">
-                  <Box
-                    variant="span"
-                    color="text-body-secondary"
-                    fontSize="body-s"
-                  >
-                    Probá con
-                  </Box>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 'var(--space-scaled-xs, 8px)',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {EXAMPLES.map((ex) => (
-                      <Button
-                        key={ex}
-                        variant="inline-link"
-                        onClick={() => setText(ex)}
-                      >
-                        {`“${ex}”`}
-                      </Button>
-                    ))}
-                  </div>
-                </SpaceBetween>
-              </Box>
+              <div className="space-y-3 text-center">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Probá con
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {EXAMPLES.map((example) => (
+                    <Button
+                      key={example}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setText(example)}
+                    >
+                      {`"${example}"`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             )}
-          </SpaceBetween>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {showDraft && (
-          <Container
-            header={
-              <Header
-                variant="h2"
-                description="Revisá y ajustá lo que haga falta. Nada se guarda hasta que confirmes."
-                actions={<Badge color="green">Borrador</Badge>}
-              >
-                Borrador interpretado
-              </Header>
-            }
-          >
-            <SpaceBetween size="l">
-              {interpretIncomplete && (
-                <Alert type="info" header="Completá lo que falta">
+      {showDraft && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle>Borrador interpretado</CardTitle>
+                <CardDescription>
+                  Revisá y ajustá lo que haga falta. Nada se guarda hasta que
+                  confirmes.
+                </CardDescription>
+              </div>
+              <Badge variant="success">Borrador</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {interpretIncomplete && (
+              <Alert variant="info">
+                <AlertTitle>Completá lo que falta</AlertTitle>
+                <AlertDescription>
                   No pudimos interpretar todo el gasto. Revisá el monto y la
                   categoría y completalos a mano.
-                </Alert>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="rounded-lg border border-border bg-muted p-5 text-center">
+              <p className="text-sm text-muted-foreground">Monto</p>
+              <p className="mt-2 text-4xl font-semibold font-mono text-foreground dark:text-[#f7f8f8]">
+                {formatARS(draftAmount ? Number(draftAmount) : null)}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="draft-description"
+                className="text-sm font-medium"
+              >
+                Descripción
+              </label>
+              <Input
+                id="draft-description"
+                value={draftDescription}
+                onChange={(event) => setDraftDescription(event.target.value)}
+                placeholder="¿En qué fue el gasto?"
+              />
+              {draftErrors.description && (
+                <p className="text-sm text-destructive">
+                  {draftErrors.description}
+                </p>
               )}
+            </div>
 
-              <Box textAlign="center" padding={{ vertical: 's' }}>
-                <Box variant="awsui-key-label">Monto</Box>
-                <Box
-                  variant="h1"
-                  fontSize="display-l"
-                  color={draftAmount ? 'inherit' : 'text-status-inactive'}
-                >
-                  {formatARS(draftAmount ? Number(draftAmount) : null)}
-                </Box>
-              </Box>
+            <div className="space-y-2">
+              <label htmlFor="draft-amount" className="text-sm font-medium">
+                Monto
+              </label>
+              <Input
+                id="draft-amount"
+                type="number"
+                inputMode="decimal"
+                value={draftAmount}
+                onChange={(event) => setDraftAmount(event.target.value)}
+                placeholder="Ej: 70000"
+              />
+              <p className="text-xs text-muted-foreground">
+                En pesos argentinos (ARS).
+              </p>
+              {draftErrors.amount && (
+                <p className="text-sm text-destructive">{draftErrors.amount}</p>
+              )}
+            </div>
 
-              <FormField
-                label="Descripción"
-                errorText={draftErrors.description}
+            <div className="space-y-2">
+              <label htmlFor="draft-category" className="text-sm font-medium">
+                Categoría
+              </label>
+              <select
+                id="draft-category"
+                value={draftCategory}
+                onChange={(event) =>
+                  setDraftCategory(event.target.value as Category | '')
+                }
+                className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-transparent"
               >
-                <Input
-                  value={draftDescription}
-                  onChange={({ detail }) => setDraftDescription(detail.value)}
-                  placeholder="¿En qué fue el gasto?"
-                />
-              </FormField>
+                <option value="">Elegí una categoría</option>
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {translateCategory(category)}
+                  </option>
+                ))}
+              </select>
+              {draftErrors.category && (
+                <p className="text-sm text-destructive">
+                  {draftErrors.category}
+                </p>
+              )}
+            </div>
 
-              <FormField
-                label="Monto"
-                description="En pesos argentinos (ARS)."
-                errorText={draftErrors.amount}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                onClick={resetAll}
+                disabled={state === 'saving'}
               >
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  value={draftAmount}
-                  onChange={({ detail }) => setDraftAmount(detail.value)}
-                  placeholder="Ej: 70000"
-                />
-              </FormField>
+                Volver a intentar
+              </Button>
 
-              <FormField label="Categoría" errorText={draftErrors.category}>
-                <Select
-                  selectedOption={draftCategory}
-                  options={CATEGORY_OPTIONS}
-                  placeholder="Elegí una categoría"
-                  onChange={({ detail }) =>
-                    setDraftCategory(detail.selectedOption)
-                  }
-                />
-              </FormField>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 'var(--space-scaled-s, 12px)',
-                }}
-              >
+              <div className="flex flex-wrap gap-3">
                 <Button
-                  iconName="redo"
-                  variant="normal"
+                  variant="ghost"
                   onClick={resetAll}
                   disabled={state === 'saving'}
                 >
-                  Volver a intentar
+                  Cancelar
                 </Button>
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button
-                    variant="link"
-                    onClick={resetAll}
-                    disabled={state === 'saving'}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    variant="primary"
-                    iconName="check"
-                    onClick={saveDraft}
-                    loading={state === 'saving'}
-                  >
-                    Guardar gasto
-                  </Button>
-                </SpaceBetween>
+                <Button onClick={saveDraft} disabled={state === 'saving'}>
+                  {state === 'saving' ? 'Guardando…' : 'Guardar gasto'}
+                </Button>
               </div>
-            </SpaceBetween>
-          </Container>
-        )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <Box textAlign="center">
-          <SpaceBetween size="xs" alignItems="center">
-            {!showDraft && (
-              <Link onFollow={openManual}>Prefiero cargarlo a mano</Link>
-            )}
-            <Button
-              variant="inline-link"
-              iconName="status-info"
-              onClick={onOpenHelp}
-            >
+      {helpExpanded && (
+        <Card className="border border-border bg-card p-5 text-left">
+          <CardHeader className="p-0 mb-3">
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground">
               ¿Cómo funciona?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 space-y-3 text-xs text-muted-foreground">
+            <p>
+              Escribí o dictá tu gasto en lenguaje natural, por ejemplo: “70 mil en el super”.
+            </p>
+            <p>
+              Te mostramos una vista previa editable. Revisala, ajustá lo que haga falta y recién ahí guardás.
+            </p>
+            <p>
+              Si no logramos interpretarlo, podés completar los datos a mano sin perder el ritmo.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap items-center justify-center gap-2 text-sm border-t border-border pt-4 text-muted-foreground">
+        {!showDraft && (
+          <>
+            <Button
+              variant="link"
+              className="h-auto p-0 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={openManual}
+            >
+              Prefiero cargarlo a mano
             </Button>
-          </SpaceBetween>
-        </Box>
-      </SpaceBetween>
+            <span className="text-muted-foreground/50 select-none">•</span>
+          </>
+        )}
+        <Button
+          variant="link"
+          className="h-auto p-0 text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setHelpExpanded((expanded) => !expanded)}
+          aria-expanded={helpExpanded}
+        >
+          ¿Cómo funciona?
+        </Button>
+      </div>
     </div>
   )
 }

@@ -1,14 +1,15 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import Box from '@cloudscape-design/components/box'
-import Container from '@cloudscape-design/components/container'
-import SpaceBetween from '@cloudscape-design/components/space-between'
-import Image from 'next/image'
 
-const LOGO = `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 30 30"><rect width="30" height="30" rx="9" fill="#0f766e"/><path d="M9 20V10m0 0h7a3 3 0 0 1 0 6H9m0 0h8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-)}`
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 interface AuthShellProps {
   title: string
@@ -24,38 +25,42 @@ export function AuthShell({
   footer,
 }: AuthShellProps) {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'var(--space-scaled-xl, 24px)',
-        background: 'var(--color-background-layout-main, #f4f4f7)',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 420 }}>
-        <SpaceBetween size="l">
-          <Box textAlign="center">
-            <SpaceBetween size="s" alignItems="center">
-              <Image src={LOGO} alt="Budgeting width" width={44} height={44} />
-              <div>
-                <Box variant="h1" padding={{ bottom: 'xxs' }}>
-                  {title}
-                </Box>
-                <Box variant="p" color="text-body-secondary">
-                  {subtitle}
-                </Box>
-              </div>
-            </SpaceBetween>
-          </Box>
+    <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
+      <div className="w-full max-w-md space-y-6">
+        <div className="space-y-3 text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={64}
+            height={64}
+            viewBox="0 0 44 44"
+            className="mx-auto"
+          >
+            <rect width="44" height="44" className="rounded-lg fill-primary" rx="8" />
+            <path
+              d="M15 29V15m0 0h10a4 4 0 0 1 0 8H15m0 0h12"
+              fill="none"
+              className="stroke-primary-foreground"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+        </div>
 
-          <Container>{children}</Container>
-
-          <Box textAlign="center" color="text-body-secondary" fontSize="body-s">
+        <Card className="bg-card border-border rounded-lg shadow-level-4 p-8">
+          <CardHeader className="sr-only">
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{subtitle}</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">{children}</CardContent>
+          <CardFooter className="justify-center p-0 pt-6 text-center text-sm text-muted-foreground">
             {footer}
-          </Box>
-        </SpaceBetween>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   )
