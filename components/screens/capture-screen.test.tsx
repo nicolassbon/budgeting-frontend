@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CaptureScreen } from './capture-screen'
 
 const addExpense = vi.fn()
+const mockFetch = vi.fn()
 
 vi.mock('@/lib/store', () => ({
   useStore: () => ({
@@ -15,13 +16,26 @@ describe('CaptureScreen', () => {
   beforeEach(() => {
     addExpense.mockReset()
     vi.useFakeTimers()
+    vi.stubGlobal('fetch', mockFetch)
+    mockFetch.mockReset()
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('creates a local interpretation preview and waits for explicit confirmation before saving', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        description: '70 mil en el super',
+        amount: 7000000,
+        category: 'GROCERIES',
+      }),
+    })
+
     const onSaved = vi.fn()
 
     render(<CaptureScreen onSaved={onSaved} onOpenHelp={vi.fn()} />)
@@ -32,7 +46,10 @@ describe('CaptureScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Interpretar gasto' }))
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(500)
+      // Flush the microtask queue for the fetch promise chain
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
     })
 
     expect(

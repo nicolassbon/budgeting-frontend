@@ -106,9 +106,56 @@ export function interpretExpense(rawText: string): Interpretation {
   }
 }
 
-export const mockCaptureService: CaptureService = {
-  async interpretText(rawText: string): Promise<Interpretation> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return interpretExpense(rawText)
-  },
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : null
 }
+
+export class HttpCaptureService implements CaptureService {
+  async interpretText(rawText: string): Promise<Interpretation> {
+    const xsrfToken = getCookie('XSRF-TOKEN')
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    if (xsrfToken) {
+      headers['X-XSRF-TOKEN'] = xsrfToken
+    }
+
+    const res = await fetch('/transactions/interpret', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ prompt: rawText }),
+    })
+
+    if (!res.ok) {
+      throw new Error(`Failed to interpret expense: status ${res.status}`)
+    }
+
+    const data = await res.json()
+
+    const amount =
+      data.amount !== null && data.amount !== undefined
+        ? data.amount / 100
+        : null
+
+    let category: Category | null = null
+    if (
+      data.category === 'GROCERIES' ||
+      data.category === 'PHARMA' ||
+      data.category === 'AUTO'
+    ) {
+      category = data.category
+    }
+
+    const description = data.description || rawText
+
+    return {
+      description,
+      amount,
+      category,
+    }
+  }
+}
+
+export const mockCaptureService: CaptureService = new HttpCaptureService()

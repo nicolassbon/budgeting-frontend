@@ -20,6 +20,7 @@ This archive report documents the completion and integration of the `connect-tra
 The implementation migrated the storage layer from localStorage mock to backend category requests. The completed tasks include:
 
 ### 1. HTTP Repository Implementation
+
 - Created `HttpExpenseRepository` class in [store.tsx](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/lib/store.tsx).
 - Implemented concurrent category GET requests to `/transactions/GROCERIES`, `/transactions/PHARMA`, and `/transactions/AUTO` via `Promise.all`.
 - Flattened response arrays, mapped numerical IDs to strings, divided amounts by 100 to convert cents/centavos to pesos, and added current ISO date fallback.
@@ -28,6 +29,7 @@ The implementation migrated the storage layer from localStorage mock to backend 
 - Updated `StoreProvider` to instantiate `HttpExpenseRepository` for logged-in sessions.
 
 ### 2. Mock Verification tests
+
 - Completely rewrote [store.test.ts](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/lib/store.test.ts) to intercept network calls via global fetch stubs and assert request parameters and mappings.
 
 ---
@@ -36,17 +38,18 @@ The implementation migrated the storage layer from localStorage mock to backend 
 
 The following files were created or modified as part of this change:
 
-| File Path | Action | Description |
-| --------- | ------ | ----------- |
-| `lib/store.tsx` | Modified | Replaced LocalStorageExpenseRepository with HttpExpenseRepository REST client. |
-| `lib/store.test.ts` | Modified | Updated test suite to verify fetch mappings and CSRF header propagation. |
-| `openspec/specs/user-transactions/spec.md` | New | Copy of main specifications for backend transactions integration. |
+| File Path                                  | Action   | Description                                                                    |
+| ------------------------------------------ | -------- | ------------------------------------------------------------------------------ |
+| `lib/store.tsx`                            | Modified | Replaced LocalStorageExpenseRepository with HttpExpenseRepository REST client. |
+| `lib/store.test.ts`                        | Modified | Updated test suite to verify fetch mappings and CSRF header propagation.       |
+| `openspec/specs/user-transactions/spec.md` | New      | Copy of main specifications for backend transactions integration.              |
 
 ---
 
 ## Verification & QA Evidence Summary
 
 All quality validation steps succeeded prior to archiving:
+
 1. **Formatting**: Code formatting complies with Prettier.
 2. **Linting**: Completed cleanly with zero warnings or errors.
 3. **Type safety**: Checked via `tsc --noEmit` and passed.

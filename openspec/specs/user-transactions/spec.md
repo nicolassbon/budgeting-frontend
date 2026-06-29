@@ -23,6 +23,7 @@ The application MUST retrieve recorded expenses directly from the backend catego
 - The application MUST flatten the three category-specific response arrays into a single unified array of expenses.
 
 #### Scenario: Successful Retrieve of All Categories
+
 - **Given** the user is authenticated and is loading the dashboard or history screens.
 - **When** `fetchExpenses` is called on the repository.
 - **Then** the application MUST concurrently call `GET /transactions/GROCERIES`, `GET /transactions/PHARMA`, and `GET /transactions/AUTO`.
@@ -71,6 +72,7 @@ The application MUST persist new expenses to the backend database.
 - If the request fails or returns a non-2xx status code, the application MUST throw an error.
 
 #### Scenario: Successful Expense Creation
+
 - **Given** a user is on the Capture screen and clicks "Guardar gasto" for a draft expense: `{ description: "Café", category: "GROCERIES", amount: 25.5 }`.
 - **And** the browser has an active cookie `XSRF-TOKEN` set to `mock-csrf-token`.
 - **When** `createExpense` is called with the expense draft.
@@ -115,11 +117,13 @@ Since the backend API does not currently support modifying or deleting transacti
 - The `deleteExpense` function MUST immediately return a resolved Promise to keep UI flows responsive.
 
 #### Scenario: Silent No-Op Update
+
 - **When** `updateExpense` is called on the repository.
 - **Then** the application MUST NOT issue any network request.
 - **And** the repository MUST return a resolved Promise with the modified expense.
 
 #### Scenario: Silent No-Op Delete
+
 - **When** `deleteExpense` is called on the repository.
 - **Then** the application MUST NOT issue any network request.
 - **And** the repository MUST return a resolved Promise.
