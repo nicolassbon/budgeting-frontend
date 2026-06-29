@@ -68,7 +68,9 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="font-sans text-3xl font-semibold tracking-[-0.6px]">Historial.</h2>
+        <h2 className="font-sans text-3xl font-semibold tracking-[-0.6px]">
+          Historial.
+        </h2>
         <p className="text-sm text-muted-foreground">
           Todos tus gastos, del más nuevo al más viejo.
         </p>
@@ -123,11 +125,21 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Fecha</TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Descripción</TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Categoría</TableHead>
-                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">Monto</TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Acciones</TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Fecha
+                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Descripción
+                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Categoría
+                  </TableHead>
+                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Monto
+                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Acciones
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -140,7 +152,10 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={cn("rounded-xs", CATEGORY_STYLES[expense.category])}
+                        className={cn(
+                          'rounded-xs',
+                          CATEGORY_STYLES[expense.category],
+                        )}
                       >
                         {translateCategory(expense.category)}
                       </Badge>

@@ -122,13 +122,17 @@ describe('AppFrame', () => {
     render(<AppFrame />)
 
     const trigger = screen.getByRole('button', { name: 'nico@budgeting.app' })
-    expect(screen.queryByRole('button', { name: /cerrar sesión/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /cerrar sesión/i }),
+    ).not.toBeInTheDocument()
 
     fireEvent.click(trigger)
     const logoutBtn = screen.getByRole('button', { name: /cerrar sesión/i })
     expect(logoutBtn).toBeInTheDocument()
 
     fireEvent.click(trigger)
-    expect(screen.queryByRole('button', { name: /cerrar sesión/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /cerrar sesión/i }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -34,8 +34,6 @@ function readSectionFromHash(hash: string): Section | null {
     : null
 }
 
-
-
 export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
   const { user, signOut } = useAuth()
   const { stats } = useDashboardStats()
@@ -68,7 +66,10 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
         setUserMenuOpen(false)
       }
     }
@@ -129,7 +130,9 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
                 />
               </svg>
               <div>
-                <h1 className="text-sm font-semibold tracking-tight text-foreground">Budgeting</h1>
+                <h1 className="text-sm font-semibold tracking-tight text-foreground">
+                  Budgeting
+                </h1>
                 <p className="text-xs text-muted-foreground">
                   Registrá tus gastos sin fricción
                 </p>
@@ -164,8 +167,8 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
                   <span>{user?.email ?? 'vos@budgeting.app'}</span>
                   <ChevronDown
                     className={cn(
-                      "h-3 w-3 transition-transform duration-200",
-                      userMenuOpen && "rotate-180"
+                      'h-3 w-3 transition-transform duration-200',
+                      userMenuOpen && 'rotate-180',
                     )}
                   />
                 </Button>
@@ -195,7 +198,10 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
 
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:px-6">
           <div className="space-y-6">
-            <nav aria-label="Secciones de Budgeting" className="space-y-2 pb-4 border-b border-border h-fit">
+            <nav
+              aria-label="Secciones de Budgeting"
+              className="space-y-2 pb-4 border-b border-border h-fit"
+            >
               {NAV_ITEMS.map((item) => {
                 const isActive = section === item.id
 
@@ -204,10 +210,10 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
                     key={item.id}
                     href={`#/${item.id}`}
                     className={cn(
-                      "flex items-center w-full h-10 text-sm transition-colors rounded-md",
+                      'flex items-center w-full h-10 text-sm transition-colors rounded-md',
                       isActive
-                        ? "text-foreground border-l-2 border-primary pl-[10px] pr-3 ml-[-2px] font-medium bg-transparent"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 px-3"
+                        ? 'text-foreground border-l-2 border-primary pl-[10px] pr-3 ml-[-2px] font-medium bg-transparent'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50 px-3',
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => setSection(item.id)}
@@ -219,7 +225,9 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
             </nav>
 
             <div className="hidden lg:block bg-card border border-border rounded-lg p-4 space-y-1">
-              <div className="text-xs text-muted-foreground">Gastado este mes</div>
+              <div className="text-xs text-muted-foreground">
+                Gastado este mes
+              </div>
               <div className="text-lg font-semibold font-mono text-foreground">
                 {formatARS(stats.total)}
               </div>

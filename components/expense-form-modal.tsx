@@ -102,7 +102,10 @@ export function ExpenseFormModal({
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 id="expense-modal-title" className="text-xl font-sans font-semibold tracking-tight">
+            <h2
+              id="expense-modal-title"
+              className="text-xl font-sans font-semibold tracking-tight"
+            >
               {mode === 'edit' ? 'Editar gasto' : 'Cargar gasto a mano'}
             </h2>
             <p className="text-sm text-muted-foreground">

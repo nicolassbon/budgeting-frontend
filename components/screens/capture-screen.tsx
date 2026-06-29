@@ -443,13 +443,16 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
           </CardHeader>
           <CardContent className="p-0 space-y-3 text-xs text-muted-foreground">
             <p>
-              Escribí o dictá tu gasto en lenguaje natural, por ejemplo: “70 mil en el super”.
+              Escribí o dictá tu gasto en lenguaje natural, por ejemplo: “70 mil
+              en el super”.
             </p>
             <p>
-              Te mostramos una vista previa editable. Revisala, ajustá lo que haga falta y recién ahí guardás.
+              Te mostramos una vista previa editable. Revisala, ajustá lo que
+              haga falta y recién ahí guardás.
             </p>
             <p>
-              Si no logramos interpretarlo, podés completar los datos a mano sin perder el ritmo.
+              Si no logramos interpretarlo, podés completar los datos a mano sin
+              perder el ritmo.
             </p>
           </CardContent>
         </Card>

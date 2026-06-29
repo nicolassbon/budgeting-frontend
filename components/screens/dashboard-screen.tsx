@@ -196,10 +196,18 @@ export function DashboardScreen({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Fecha</TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Descripción</TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Categoría</TableHead>
-                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">Monto</TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Fecha
+                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Descripción
+                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Categoría
+                  </TableHead>
+                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Monto
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -212,7 +220,10 @@ export function DashboardScreen({
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={cn("rounded-xs", CATEGORY_STYLES[expense.category])}
+                        className={cn(
+                          'rounded-xs',
+                          CATEGORY_STYLES[expense.category],
+                        )}
                       >
                         {translateCategory(expense.category)}
                       </Badge>
