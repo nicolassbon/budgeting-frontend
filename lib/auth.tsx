@@ -17,26 +17,47 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
+
+function mapBackendUser(data: { id: number; email: string }): User {
+  return {
+    id: String(data.id),
+    email: data.email,
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      const session = localStorage.getItem('budgeting_user_session')
-      if (session) {
-        setUser(JSON.parse(session))
+    const fetchSession = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch('/auth/me')
+        if (response.status === 200) {
+          const data = await response.json()
+          setUser(mapBackendUser(data))
+        } else {
+          setUser(null)
+        }
+      } catch (e) {
+        console.error('Failed to parse session', e)
+        setUser(null)
+      } finally {
+        setLoading(false)
       }
-    } catch (e) {
-      console.error('Failed to parse session', e)
-    } finally {
-      setLoading(false)
     }
+    fetchSession()
   }, [])
 
   const login = async (email: string, password: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
     if (!email.trim() || !email.includes('@')) {
       throw new Error('Ingresá un email válido.')
     }
@@ -44,34 +65,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Ingresá tu contraseña.')
     }
 
-    let users: any[] = []
-    try {
-      const usersStr = localStorage.getItem('budgeting_registered_users')
-      if (usersStr) {
-        users = JSON.parse(usersStr)
-      }
-    } catch (e) {
-      console.error(e)
-    }
+    const xsrf = getCookie('XSRF-TOKEN')
+    const response = await fetch('/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': xsrf || '',
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    })
 
-    const found = users.find(
-      (u) =>
-        u.email.toLowerCase() === email.trim().toLowerCase() &&
-        u.password === password,
-    )
-
-    if (!found) {
+    if (!response.ok) {
       throw new Error('Credenciales inválidas.')
     }
 
-    const loggedInUser: User = { id: found.id, email: found.email }
-    localStorage.setItem('budgeting_user_session', JSON.stringify(loggedInUser))
-    setUser(loggedInUser)
+    const data = await response.json()
+    setUser(mapBackendUser(data))
   }
 
   const signup = async (email: string, password: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
     if (!email.trim() || !email.includes('@')) {
       throw new Error('Ingresá un email válido.')
     }
@@ -79,41 +91,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Usá al menos 6 caracteres.')
     }
 
-    let users: any[] = []
-    try {
-      const usersStr = localStorage.getItem('budgeting_registered_users')
-      if (usersStr) {
-        users = JSON.parse(usersStr)
-      }
-    } catch (e) {
-      console.error(e)
-    }
+    const xsrf = getCookie('XSRF-TOKEN')
+    const response = await fetch('/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': xsrf || '',
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    })
 
-    const exists = users.some(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
-    )
-    if (exists) {
+    if (!response.ok) {
       throw new Error('El usuario ya está registrado.')
     }
 
-    const newUser = {
-      id: Math.random().toString(36).slice(2, 10),
-      email: email.trim(),
-      password,
-    }
-
-    users.push(newUser)
-    localStorage.setItem('budgeting_registered_users', JSON.stringify(users))
-
-    const loggedInUser: User = { id: newUser.id, email: newUser.email }
-    localStorage.setItem('budgeting_user_session', JSON.stringify(loggedInUser))
-    setUser(loggedInUser)
+    const data = await response.json()
+    setUser(mapBackendUser(data))
   }
 
   const signOut = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    localStorage.removeItem('budgeting_user_session')
-    setUser(null)
+    try {
+      const xsrf = getCookie('XSRF-TOKEN')
+      await fetch('/auth/logout', {
+        method: 'POST',
+        headers: {
+          'X-XSRF-TOKEN': xsrf || '',
+        },
+      })
+    } catch (e) {
+      console.error('Failed to log out', e)
+    } finally {
+      setUser(null)
+    }
   }
 
   return (

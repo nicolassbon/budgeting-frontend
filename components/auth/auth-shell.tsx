@@ -35,7 +35,12 @@ export function AuthShell({
             viewBox="0 0 44 44"
             className="mx-auto"
           >
-            <rect width="44" height="44" className="rounded-lg fill-primary" rx="8" />
+            <rect
+              width="44"
+              height="44"
+              className="rounded-lg fill-primary"
+              rx="8"
+            />
             <path
               d="M15 29V15m0 0h10a4 4 0 0 1 0 8H15m0 0h12"
               fill="none"

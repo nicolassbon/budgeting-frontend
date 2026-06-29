@@ -122,7 +122,12 @@ export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
           )}
         </div>
 
-        <Button type="submit" variant="default" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          variant="default"
+          className="w-full"
+          disabled={loading}
+        >
           {loading ? 'Creando cuenta…' : 'Crear cuenta'}
         </Button>
       </form>

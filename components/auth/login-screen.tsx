@@ -141,7 +141,12 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
           </Alert>
         )}
 
-        <Button type="submit" variant="default" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          variant="default"
+          className="w-full"
+          disabled={loading}
+        >
           {loading ? 'Entrando…' : 'Iniciar sesión'}
         </Button>
 
