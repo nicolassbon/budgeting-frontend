@@ -20,6 +20,7 @@ This archive report documents the completion and integration of the `connect-int
 The implementation migrated text/voice description interpretation from frontend-only regexes to backend Spring AI query endpoints. The completed tasks include:
 
 ### 1. HTTP NLP Service Client Implementation
+
 - Created `HttpCaptureService` inside [format.ts](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/lib/format.ts).
 - Integrated `POST /transactions/interpret` request structure forwarding client-side `X-XSRF-TOKEN` security token cookie.
 - Mapped backend centavos to frontend pesos (dividing by `100`), handled strict category mappings (`GROCERIES`, `PHARMA`, `AUTO` or fallback `null`), and fell back to raw text description if backend description was empty or null.
@@ -27,6 +28,7 @@ The implementation migrated text/voice description interpretation from frontend-
 - Gracefully handled network and API request failures by falling back to manual entry mode in the Capture screen.
 
 ### 2. Testing Refactoring
+
 - Updated [capture-screen.test.tsx](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/components/screens/capture-screen.test.tsx) integration tests to mock the asynchronous global fetch call.
 - Extended unit tests in [format.test.ts](file:///home/nico/Escritorio/budgeting-workspace/budgeting-frontend/lib/format.test.ts) to assert HTTP request bodies, headers, cookie extraction, status code handling, centavos-to-pesos value scaling, and category validation boundary checks.
 
@@ -36,18 +38,19 @@ The implementation migrated text/voice description interpretation from frontend-
 
 The following files were created or modified as part of this change:
 
-| File Path | Action | Description |
-| --------- | ------ | ----------- |
-| `lib/format.ts` | Modified | Added HttpCaptureService and getCookie helper, updated exports. |
-| `lib/format.test.ts` | Modified | Added HttpCaptureService unit tests verifying fetch payload mapping. |
-| `components/screens/capture-screen.test.tsx` | Modified | Updated integration tests to stub global fetch. |
-| `openspec/specs/user-transactions/nlp-spec.md` | New | Copy of main specifications for backend NLP interpretation. |
+| File Path                                      | Action   | Description                                                          |
+| ---------------------------------------------- | -------- | -------------------------------------------------------------------- |
+| `lib/format.ts`                                | Modified | Added HttpCaptureService and getCookie helper, updated exports.      |
+| `lib/format.test.ts`                           | Modified | Added HttpCaptureService unit tests verifying fetch payload mapping. |
+| `components/screens/capture-screen.test.tsx`   | Modified | Updated integration tests to stub global fetch.                      |
+| `openspec/specs/user-transactions/nlp-spec.md` | New      | Copy of main specifications for backend NLP interpretation.          |
 
 ---
 
 ## Verification & QA Evidence Summary
 
 All quality validation steps succeeded prior to archiving:
+
 1. **Formatting**: Code formatting complies with Prettier.
 2. **Linting**: Completed cleanly with zero warnings or errors.
 3. **Type safety**: Checked via `tsc --noEmit` and passed.
