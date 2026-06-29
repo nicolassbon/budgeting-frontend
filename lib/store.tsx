@@ -12,82 +12,10 @@ import {
 import type { Category, Expense } from './types'
 import { useAuth } from './auth'
 
-function id() {
-  return Math.random().toString(36).slice(2, 10)
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString()
-}
-
-function seedExpenses(): Expense[] {
-  return [
-    {
-      id: id(),
-      description: 'Compra semanal en el super',
-      amount: 84500,
-      category: 'GROCERIES',
-      date: daysAgo(1),
-    },
-    {
-      id: id(),
-      description: 'Nafta YPF',
-      amount: 45000,
-      category: 'AUTO',
-      date: daysAgo(2),
-    },
-    {
-      id: id(),
-      description: 'Ibuprofeno y vitaminas',
-      amount: 12300,
-      category: 'PHARMA',
-      date: daysAgo(3),
-    },
-    {
-      id: id(),
-      description: 'Verdulería del barrio',
-      amount: 18700,
-      category: 'GROCERIES',
-      date: daysAgo(5),
-    },
-    {
-      id: id(),
-      description: 'Peaje autopista',
-      amount: 4200,
-      category: 'AUTO',
-      date: daysAgo(6),
-    },
-    {
-      id: id(),
-      description: 'Carrefour',
-      amount: 96200,
-      category: 'GROCERIES',
-      date: daysAgo(9),
-    },
-    {
-      id: id(),
-      description: 'Protector solar',
-      amount: 21500,
-      category: 'PHARMA',
-      date: daysAgo(12),
-    },
-    {
-      id: id(),
-      description: 'Cochera mensual',
-      amount: 38000,
-      category: 'AUTO',
-      date: daysAgo(14),
-    },
-    {
-      id: id(),
-      description: 'Almacén de la esquina',
-      amount: 9600,
-      category: 'GROCERIES',
-      date: daysAgo(18),
-    },
-  ]
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : null
 }
 
 export interface ExpenseRepository {
@@ -97,95 +25,93 @@ export interface ExpenseRepository {
   deleteExpense(id: string): Promise<void>
 }
 
-export class LocalStorageExpenseRepository implements ExpenseRepository {
-  private key: string
-
-  constructor(email: string) {
-    this.key = `budgeting_expenses_${email}`
-    if (typeof window !== 'undefined') {
-      try {
-        const existing = localStorage.getItem(this.key)
-        if (!existing) {
-          localStorage.setItem(this.key, JSON.stringify(seedExpenses()))
-        }
-      } catch (e) {
-        console.error('Failed to seed expenses', e)
-      }
-    }
-  }
+export class HttpExpenseRepository implements ExpenseRepository {
+  constructor(public email?: string) {}
 
   async fetchExpenses(): Promise<Expense[]> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return this.fetchExpensesDirect()
+    const categories: Category[] = ['GROCERIES', 'PHARMA', 'AUTO']
+    const urls = categories.map((cat) => `/transactions/${cat}`)
+
+    const responses = await Promise.all(urls.map((url) => fetch(url)))
+
+    for (const res of responses) {
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch transactions from backend: status ${res.status}`,
+        )
+      }
+    }
+
+    const dataArrays = await Promise.all(responses.map((res) => res.json()))
+    const flattened: Expense[] = []
+
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i]
+      const items = dataArrays[i]
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          flattened.push({
+            id: String(item.id),
+            description: item.description || '',
+            amount: item.amount / 100,
+            category: item.category || category,
+            date: new Date().toISOString(),
+          })
+        }
+      }
+    }
+
+    return flattened
   }
 
   async createExpense(input: Omit<Expense, 'id' | 'date'>): Promise<Expense> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const newExpense: Expense = {
-      id: id(),
+    const csrfToken = getCookie('XSRF-TOKEN')
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken
+    }
+
+    const res = await fetch('/transactions', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        description: input.description,
+        category: input.category,
+        amount: Math.round(input.amount * 100),
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to create expense in backend: status ${res.status}`,
+      )
+    }
+
+    const data = await res.json()
+    return {
+      id: String(data.id),
+      description: data.description || input.description,
+      amount: data.amount / 100,
+      category: data.category || input.category,
       date: new Date().toISOString(),
-      ...input,
     }
-    if (typeof window === 'undefined') return newExpense
-    try {
-      const expenses = this.fetchExpensesDirect()
-      const updated = [newExpense, ...expenses]
-      localStorage.setItem(this.key, JSON.stringify(updated))
-    } catch (e) {
-      console.error('Failed to create expense', e)
-    }
-    return newExpense
   }
 
   async updateExpense(id: string, updates: Partial<Expense>): Promise<Expense> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    if (typeof window === 'undefined') {
-      return {
-        id,
-        description: '',
-        amount: 0,
-        category: 'GROCERIES',
-        date: '',
-        ...updates,
-      } as Expense
-    }
-    const expenses = this.fetchExpensesDirect()
-    let updatedExpense: Expense | null = null
-    const updated = expenses.map((e) => {
-      if (e.id === id) {
-        updatedExpense = { ...e, ...updates }
-        return updatedExpense
-      }
-      return e
-    })
-    if (!updatedExpense) {
-      throw new Error(`Expense with id ${id} not found`)
-    }
-    localStorage.setItem(this.key, JSON.stringify(updated))
-    return updatedExpense
+    return {
+      id,
+      description: '',
+      amount: 0,
+      category: 'GROCERIES',
+      date: new Date().toISOString(),
+      ...updates,
+    } as Expense
   }
 
   async deleteExpense(id: string): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    if (typeof window === 'undefined') return
-    try {
-      const expenses = this.fetchExpensesDirect()
-      const updated = expenses.filter((e) => e.id !== id)
-      localStorage.setItem(this.key, JSON.stringify(updated))
-    } catch (e) {
-      console.error('Failed to delete expense', e)
-    }
-  }
-
-  private fetchExpensesDirect(): Expense[] {
-    if (typeof window === 'undefined') return []
-    try {
-      const data = localStorage.getItem(this.key)
-      return data ? JSON.parse(data) : []
-    } catch (e) {
-      console.error('Failed to fetch expenses direct', e)
-      return []
-    }
+    return
   }
 }
 
@@ -206,7 +132,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const repository = useMemo(() => {
     if (!user) return null
-    return new LocalStorageExpenseRepository(user.email)
+    return new HttpExpenseRepository(user.email)
   }, [user])
 
   useEffect(() => {
