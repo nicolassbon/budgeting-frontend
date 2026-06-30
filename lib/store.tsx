@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { CATEGORIES, isCategory, type Category, type Expense } from './types'
+import { isCategory, type Category, type Expense } from './types'
 import { useAuth } from './auth'
 
 function getCookie(name: string): string | null {
@@ -42,38 +42,34 @@ export class HttpExpenseRepository implements ExpenseRepository {
   constructor(public email?: string) {}
 
   async fetchExpenses(): Promise<Expense[]> {
-    const urls = CATEGORIES.map((cat) => `/transactions/${cat}`)
+    const res = await fetch('/transactions')
 
-    const responses = await Promise.all(urls.map((url) => fetch(url)))
-
-    for (const res of responses) {
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch transactions from backend: status ${res.status}`,
-        )
-      }
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch transactions from backend: status ${res.status}`,
+      )
     }
 
-    const dataArrays = await Promise.all(responses.map((res) => res.json()))
-    const flattened: Expense[] = []
+    const data = await res.json()
+    const items = Array.isArray(data?.items) ? data.items : []
 
-    for (let i = 0; i < CATEGORIES.length; i++) {
-      const category = CATEGORIES[i]
-      const items = dataArrays[i]
-      if (Array.isArray(items)) {
-        for (const item of items) {
-          flattened.push({
-            id: String(item.id),
-            description: item.description || '',
-            amount: item.amount / 100,
-            category: isCategory(item.category) ? item.category : category,
-            date: item.date || new Date().toISOString(),
-          })
-        }
-      }
-    }
-
-    return flattened
+    return items
+      .filter((item: { category?: unknown }) => isCategory(item.category))
+      .map(
+        (item: {
+          id: string | number
+          description?: string
+          amount: number
+          category: Category
+          date?: string
+        }) => ({
+          id: String(item.id),
+          description: item.description || '',
+          amount: item.amount / 100,
+          category: item.category,
+          date: item.date || new Date().toISOString(),
+        }),
+      )
   }
 
   async createExpense(input: Omit<Expense, 'id' | 'date'>): Promise<Expense> {
@@ -99,7 +95,7 @@ export class HttpExpenseRepository implements ExpenseRepository {
       description: data.description || input.description,
       amount: data.amount / 100,
       category: data.category || input.category,
-      date: new Date().toISOString(),
+      date: data.date || new Date().toISOString(),
     }
   }
 

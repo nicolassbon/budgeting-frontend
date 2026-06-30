@@ -1,7 +1,6 @@
 import React from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { CATEGORIES } from './types'
 import { HttpExpenseRepository, StoreProvider, useStore } from './store'
 
 const mockUser = {
@@ -23,7 +22,6 @@ describe('HttpExpenseRepository tests', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', mockFetch)
     mockFetch.mockReset()
-    // Clear cookies
     if (typeof document !== 'undefined') {
       document.cookie = 'XSRF-TOKEN=; Max-Age=0'
     }
@@ -34,137 +32,78 @@ describe('HttpExpenseRepository tests', () => {
   })
 
   describe('fetchExpenses', () => {
-    it('should concurrently fetch expenses from category-specific endpoints and preserve backend dates', async () => {
+    it('should fetch expenses from GET /transactions and preserve backend dates', async () => {
       const backendFoodDate = '2026-06-20T10:00:00.000Z'
       const backendTransportDate = '2026-06-21T15:30:00.000Z'
       const backendServicesDate = '2026-06-22T09:15:00.000Z'
 
-      mockFetch.mockImplementation(async (url: string) => {
-        if (url.endsWith('/transactions/COMIDA')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [
-              {
-                id: 1,
-                description: 'Leche',
-                amount: 15050,
-                category: 'COMIDA',
-                date: backendFoodDate,
-              },
-            ],
-          }
-        }
-        if (url.endsWith('/transactions/FARMACIA')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [],
-          }
-        }
-        if (url.endsWith('/transactions/TRANSPORTE')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [
-              {
-                id: 2,
-                description: 'Nafta',
-                amount: 500000,
-                category: 'TRANSPORTE',
-                date: backendTransportDate,
-              },
-            ],
-          }
-        }
-        if (url.endsWith('/transactions/SERVICIOS')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [
-              {
-                id: 3,
-                description: 'Internet hogar',
-                amount: 189000,
-                category: 'SERVICIOS',
-                date: backendServicesDate,
-              },
-            ],
-          }
-        }
-        if (
-          CATEGORIES.some((category) =>
-            url.endsWith(`/transactions/${category}`),
-          )
-        ) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [],
-          }
-        }
-        return { ok: false, status: 404 }
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 1,
+              description: 'Leche',
+              amount: 15050,
+              category: 'COMIDA',
+              date: backendFoodDate,
+            },
+            {
+              id: 2,
+              description: 'Nafta',
+              amount: 500000,
+              category: 'TRANSPORTE',
+              date: backendTransportDate,
+            },
+            {
+              id: 3,
+              description: 'Internet hogar',
+              amount: 189000,
+              category: 'SERVICIOS',
+              date: backendServicesDate,
+            },
+          ],
+          totalAmountCents: 704050,
+          totalAmount: 7040.5,
+          transactionCount: 3,
+        }),
       })
 
       const repo = new HttpExpenseRepository('user@budgeting.app')
       const expenses = await repo.fetchExpenses()
 
-      expect(mockFetch).toHaveBeenCalledTimes(CATEGORIES.length)
-      for (const category of CATEGORIES) {
-        expect(mockFetch).toHaveBeenCalledWith(`/transactions/${category}`)
-      }
-
-      expect(expenses).toHaveLength(3)
-
-      const expense1 = expenses.find((e) => e.id === '1')
-      expect(expense1).toBeDefined()
-      expect(expense1!.description).toBe('Leche')
-      expect(expense1!.amount).toBe(150.5)
-      expect(expense1!.category).toBe('COMIDA')
-      expect(expense1!.date).toBe(backendFoodDate)
-
-      const expense2 = expenses.find((e) => e.id === '2')
-      expect(expense2).toBeDefined()
-      expect(expense2!.description).toBe('Nafta')
-      expect(expense2!.amount).toBe(5000)
-      expect(expense2!.category).toBe('TRANSPORTE')
-      expect(expense2!.date).toBe(backendTransportDate)
-
-      const expense3 = expenses.find((e) => e.id === '3')
-      expect(expense3).toBeDefined()
-      expect(expense3!.description).toBe('Internet hogar')
-      expect(expense3!.amount).toBe(1890)
-      expect(expense3!.category).toBe('SERVICIOS')
-      expect(expense3!.date).toBe(backendServicesDate)
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+      expect(mockFetch).toHaveBeenCalledWith('/transactions')
+      expect(expenses).toEqual([
+        {
+          id: '1',
+          description: 'Leche',
+          amount: 150.5,
+          category: 'COMIDA',
+          date: backendFoodDate,
+        },
+        {
+          id: '2',
+          description: 'Nafta',
+          amount: 5000,
+          category: 'TRANSPORTE',
+          date: backendTransportDate,
+        },
+        {
+          id: '3',
+          description: 'Internet hogar',
+          amount: 1890,
+          category: 'SERVICIOS',
+          date: backendServicesDate,
+        },
+      ])
     })
 
-    it('should throw an error if any of the category requests are not ok', async () => {
-      mockFetch.mockImplementation(async (url: string) => {
-        if (url.endsWith('/transactions/COMIDA')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [],
-          }
-        }
-        if (url.endsWith('/transactions/FARMACIA')) {
-          return {
-            ok: false,
-            status: 500,
-          }
-        }
-        if (
-          CATEGORIES.some((category) =>
-            url.endsWith(`/transactions/${category}`),
-          )
-        ) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => [],
-          }
-        }
-        return { ok: false, status: 404 }
+    it('should throw an error if GET /transactions is not ok', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
       })
 
       const repo = new HttpExpenseRepository('user@budgeting.app')
@@ -173,10 +112,12 @@ describe('HttpExpenseRepository tests', () => {
   })
 
   describe('createExpense', () => {
-    it('should send POST request to /transactions with CSRF token and correct payload structure', async () => {
+    it('should send POST request to /transactions with CSRF token and preserve backend response date', async () => {
       if (typeof document !== 'undefined') {
         document.cookie = 'XSRF-TOKEN=test-csrf-value'
       }
+
+      const backendDate = '2026-06-24T14:20:00.000Z'
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -186,6 +127,7 @@ describe('HttpExpenseRepository tests', () => {
           description: 'Remedio',
           amount: 20045,
           category: 'FARMACIA',
+          date: backendDate,
         }),
       })
 
@@ -209,11 +151,13 @@ describe('HttpExpenseRepository tests', () => {
         }),
       })
 
-      expect(saved.id).toBe('3')
-      expect(saved.description).toBe('Remedio')
-      expect(saved.amount).toBe(200.45)
-      expect(saved.category).toBe('FARMACIA')
-      expect(new Date(saved.date).getTime()).not.toBeNaN()
+      expect(saved).toEqual({
+        id: '3',
+        description: 'Remedio',
+        amount: 200.45,
+        category: 'FARMACIA',
+        date: backendDate,
+      })
     })
 
     it('should throw an error if the creation response is not ok', async () => {
@@ -240,33 +184,24 @@ describe('HttpExpenseRepository tests', () => {
 
       mockFetch.mockImplementation(
         async (input: string, init?: RequestInit) => {
-          if (input === '/transactions/COMIDA' && !init) {
+          if (input === '/transactions' && !init) {
             return {
               ok: true,
               status: 200,
-              json: async () => [
-                {
-                  id: 1,
-                  description: 'Leche',
-                  amount: 15050,
-                  category: 'COMIDA',
-                  date: fetchedDate,
-                },
-              ],
-            }
-          }
-
-          if (
-            CATEGORIES.some(
-              (category) => input === `/transactions/${category}`,
-            ) &&
-            input !== '/transactions/COMIDA' &&
-            !init
-          ) {
-            return {
-              ok: true,
-              status: 200,
-              json: async () => [],
+              json: async () => ({
+                items: [
+                  {
+                    id: 1,
+                    description: 'Leche',
+                    amount: 15050,
+                    category: 'COMIDA',
+                    date: fetchedDate,
+                  },
+                ],
+                totalAmountCents: 15050,
+                totalAmount: 150.5,
+                transactionCount: 1,
+              }),
             }
           }
 
@@ -317,7 +252,28 @@ describe('HttpExpenseRepository tests', () => {
       )
 
       expect(putCall).toBeDefined()
-      expect(JSON.parse(String(putCall?.[1]?.body))).toEqual({
+      const rawPutBody = putCall?.[1]?.body
+      if (typeof rawPutBody !== 'string') {
+        throw new Error('Expected PUT request body to be a JSON string')
+      }
+      let putBody: {
+        description: string
+        category: string
+        amount: number
+        date?: string
+      }
+
+      try {
+        putBody = JSON.parse(rawPutBody) as {
+          description: string
+          category: string
+          amount: number
+          date?: string
+        }
+      } catch (error) {
+        throw new Error(`Invalid PUT request body JSON: ${String(error)}`)
+      }
+      expect(putBody).toEqual({
         description: 'Leche descremada',
         category: 'COMIDA',
         amount: 15050,
