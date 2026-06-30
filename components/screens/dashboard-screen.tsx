@@ -85,7 +85,7 @@ export function DashboardScreen({
     )
   }
 
-  const hasData = stats.count > 0
+  const hasRecentMovements = recent.length > 0
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -239,7 +239,7 @@ export function DashboardScreen({
                   </TableCell>
                 </TableRow>
               ))}
-              {!hasData && (
+              {!hasRecentMovements && (
                 <TableRow>
                   <TableCell
                     colSpan={5}

@@ -12,6 +12,7 @@ const mockFetch = vi.fn()
 const mockStoreState = {
   expenses: [] as Expense[],
   loading: false,
+  expenseMutationsVersion: 0,
 }
 
 vi.mock('./store', () => ({
@@ -57,6 +58,7 @@ describe('insights utilities', () => {
     mockFetch.mockReset()
     mockStoreState.expenses = []
     mockStoreState.loading = false
+    mockStoreState.expenseMutationsVersion = 0
   })
 
   it('should filter expenses to only the current month/year', () => {
@@ -176,24 +178,42 @@ describe('insights utilities', () => {
     expect(result.current.stats.topCategory?.category).toBe('COMIDA')
   })
 
-  it('should not refetch dashboard stats when local expenses change', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        period: { from: '2026-06-01', to: '2026-07-01' },
-        totalAmountCents: 15050,
-        transactionCount: 1,
-        topCategories: [
-          {
-            category: 'COMIDA',
-            totalAmountCents: 15050,
-            totalAmount: 150.5,
-            transactionCount: 1,
-          },
-        ],
-      }),
-    })
+  it('should refetch dashboard stats when the store invalidation version changes', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          period: { from: '2026-06-01', to: '2026-07-01' },
+          totalAmountCents: 15050,
+          transactionCount: 1,
+          topCategories: [
+            {
+              category: 'COMIDA',
+              totalAmountCents: 15050,
+              totalAmount: 150.5,
+              transactionCount: 1,
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          period: { from: '2026-06-01', to: '2026-07-01' },
+          totalAmountCents: 65050,
+          transactionCount: 2,
+          topCategories: [
+            {
+              category: 'COMIDA',
+              totalAmountCents: 65050,
+              totalAmount: 650.5,
+              transactionCount: 2,
+            },
+          ],
+        }),
+      })
 
     const { result, rerender } = renderHook(() => useDashboardStats())
 
@@ -203,18 +223,15 @@ describe('insights utilities', () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
 
-    mockStoreState.expenses = [
-      {
-        id: '2',
-        description: 'Farmacia',
-        amount: 500,
-        category: 'FARMACIA',
-        date: '2026-06-21T10:00:00.000Z',
-      },
-    ]
+    mockStoreState.expenseMutationsVersion = 1
 
     rerender()
 
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2)
+    })
+
+    expect(result.current.stats.total).toBe(650.5)
+    expect(result.current.stats.count).toBe(2)
   })
 })

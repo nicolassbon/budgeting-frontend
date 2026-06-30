@@ -148,6 +148,7 @@ export class HttpExpenseRepository implements ExpenseRepository {
 interface StoreValue {
   expenses: Expense[]
   loading: boolean
+  expenseMutationsVersion: number
   addExpense: (input: Omit<Expense, 'id' | 'date'>) => Promise<void>
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>
   deleteExpense: (id: string) => Promise<void>
@@ -158,6 +159,7 @@ const StoreContext = createContext<StoreValue | null>(null)
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [expenseMutationsVersion, setExpenseMutationsVersion] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const repository = useMemo(() => {
@@ -201,6 +203,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         const newExpense = await repository.createExpense(input)
         setExpenses((prev) => [newExpense, ...prev])
+        setExpenseMutationsVersion((prev) => prev + 1)
       } finally {
         setLoading(false)
       }
@@ -226,6 +229,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         const updated = await repository.updateExpense(id, payload)
         setExpenses((prev) => prev.map((e) => (e.id === id ? updated : e)))
+        setExpenseMutationsVersion((prev) => prev + 1)
       } finally {
         setLoading(false)
       }
@@ -240,6 +244,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await repository.deleteExpense(id)
         setExpenses((prev) => prev.filter((e) => e.id !== id))
+        setExpenseMutationsVersion((prev) => prev + 1)
       } finally {
         setLoading(false)
       }
@@ -248,8 +253,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ expenses, loading, addExpense, updateExpense, deleteExpense }),
-    [expenses, loading, addExpense, updateExpense, deleteExpense],
+    () => ({
+      expenses,
+      loading,
+      expenseMutationsVersion,
+      addExpense,
+      updateExpense,
+      deleteExpense,
+    }),
+    [
+      expenses,
+      loading,
+      expenseMutationsVersion,
+      addExpense,
+      updateExpense,
+      deleteExpense,
+    ],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

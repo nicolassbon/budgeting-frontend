@@ -169,7 +169,7 @@ export function mapDashboardSummaryToMonthStats(
 }
 
 export function useDashboardStats(): { stats: MonthStats; loading: boolean } {
-  const { loading: storeLoading } = useStore()
+  const { loading: storeLoading, expenseMutationsVersion } = useStore()
   const [stats, setStats] = useState<MonthStats>(() => emptyMonthStats())
   const [loading, setLoading] = useState(true)
 
@@ -202,7 +202,7 @@ export function useDashboardStats(): { stats: MonthStats; loading: boolean } {
     return () => {
       active = false
     }
-  }, [])
+  }, [expenseMutationsVersion])
 
   return { stats, loading: loading || storeLoading }
 }
