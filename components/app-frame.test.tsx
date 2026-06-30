@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 import { AppFrame } from './app-frame'
@@ -24,21 +24,58 @@ vi.mock('@/lib/insights', () => ({
   }),
 }))
 
-vi.mock('@/components/screens/capture-screen', () => ({
-  CaptureScreen: ({
-    onSaved,
-    onOpenHelp,
-  }: {
-    onSaved: () => void
-    onOpenHelp: () => void
-  }) => (
-    <div>
-      <p>capture screen</p>
-      <button onClick={onSaved}>simulate save</button>
-      <button onClick={onOpenHelp}>open help</button>
-    </div>
-  ),
+vi.mock('@/lib/store', () => ({
+  useStore: () => ({
+    expenses: [],
+    loading: false,
+    addExpense: vi.fn(),
+    updateExpense: vi.fn(),
+    deleteExpense: vi.fn(),
+  }),
 }))
+
+vi.mock('@/components/capture-console', () => {
+  const { useState, useEffect } = require('react')
+  return {
+    CaptureConsole: ({ onSaved }: { onSaved: (msg: string) => void }) => {
+      const [isOpen, setIsOpen] = useState(false)
+      useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault()
+            setIsOpen((prev: boolean) => !prev)
+          }
+          if (e.key === 'Escape') {
+            setIsOpen(false)
+          }
+        }
+        const handleFocusEvent = () => {
+          setIsOpen(true)
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        window.addEventListener('focus-capture-console', handleFocusEvent)
+        return () => {
+          window.removeEventListener('keydown', handleKeyDown)
+          window.removeEventListener('focus-capture-console', handleFocusEvent)
+        }
+      }, [])
+
+      return (
+        <div>
+          <button aria-label="Capturar gasto" onClick={() => setIsOpen(true)}>
+            Capturar gasto
+          </button>
+          {isOpen && (
+            <div role="dialog" aria-label="Capturar gasto">
+              <p>modal open</p>
+              <button onClick={() => onSaved('saved')}>simulate save</button>
+            </div>
+          )}
+        </div>
+      )
+    },
+  }
+})
 
 vi.mock('@/components/screens/dashboard-screen', () => ({
   DashboardScreen: ({
@@ -75,13 +112,13 @@ describe('AppFrame', () => {
     expect(
       screen.getByRole('heading', { name: 'Budgeting' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /capturar gasto/i }),
-    ).toHaveAttribute('aria-current', 'page')
-    expect(
-      screen.getByRole('link', { name: /capturar gasto/i }),
-    ).toHaveAttribute('href', '#/capturar')
-    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute(
+
+    // Default section is 'inicio' → Panel link is active
+    expect(screen.getByRole('link', { name: 'Panel' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByRole('link', { name: 'Panel' })).toHaveAttribute(
       'href',
       '#/inicio',
     )
@@ -89,14 +126,18 @@ describe('AppFrame', () => {
       'href',
       '#/historial',
     )
+    expect(screen.getByRole('link', { name: 'Insights' })).toHaveAttribute(
+      'href',
+      '#/insights',
+    )
   })
 
   it('switches sections from hash anchors and toggles dark mode from the app header', () => {
     render(<AppFrame />)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Inicio' }))
-    expect(screen.getByText('dashboard screen')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute(
+    fireEvent.click(screen.getByRole('link', { name: 'Historial' }))
+    expect(screen.getByText('history screen')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Historial' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -134,5 +175,31 @@ describe('AppFrame', () => {
     expect(
       screen.queryByRole('button', { name: /cerrar sesión/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('opens modal via Ctrl+K keyboard shortcut', () => {
+    render(<AppFrame />)
+
+    // Modal should not be open
+    expect(screen.queryByText('modal open')).not.toBeInTheDocument()
+
+    // Trigger Ctrl+K keydown — opens modal
+    fireEvent.keyDown(window, { ctrlKey: true, key: 'k' })
+    expect(screen.getByText('modal open')).toBeInTheDocument()
+
+    // Trigger Ctrl+K keydown again — closes modal
+    fireEvent.keyDown(window, { ctrlKey: true, key: 'k' })
+    expect(screen.queryByText('modal open')).not.toBeInTheDocument()
+  })
+
+  it('opens modal when Dashboard CTA dispatches focus-capture-console', () => {
+    render(<AppFrame />)
+
+    expect(screen.queryByText('modal open')).not.toBeInTheDocument()
+
+    // Click "go capture" button on mocked dashboard screen
+    fireEvent.click(screen.getByRole('button', { name: 'go capture' }))
+
+    expect(screen.getByText('modal open')).toBeInTheDocument()
   })
 })

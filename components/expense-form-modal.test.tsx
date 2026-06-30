@@ -55,7 +55,7 @@ describe('ExpenseFormModal', () => {
       target: { value: '-1' },
     })
     fireEvent.change(screen.getByLabelText('Categoría'), {
-      target: { value: 'GROCERIES' },
+      target: { value: 'COMIDA' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
@@ -82,14 +82,14 @@ describe('ExpenseFormModal', () => {
       target: { value: '12300.4' },
     })
     fireEvent.change(screen.getByLabelText('Categoría'), {
-      target: { value: 'PHARMA' },
+      target: { value: 'FARMACIA' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar gasto' }))
 
     expect(onSubmit).toHaveBeenCalledWith({
       description: 'Farmacia Central',
       amount: 12300,
-      category: 'PHARMA',
+      category: 'FARMACIA',
     })
   })
 })

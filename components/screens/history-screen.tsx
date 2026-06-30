@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Filter, Calendar } from 'lucide-react'
 
 import {
   ExpenseFormModal,
@@ -9,13 +9,6 @@ import {
 } from '@/components/expense-form-modal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -34,10 +27,20 @@ import {
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const CATEGORY_STYLES: Record<Category, string> = {
-  GROCERIES: 'bg-indigo-500/15 text-indigo-400 border-transparent',
-  AUTO: 'bg-emerald-500/15 text-emerald-400 border-transparent',
-  PHARMA: 'bg-rose-500/15 text-rose-400 border-transparent',
+function getCategoryStyle(category: Category): string {
+  switch (category) {
+    case 'COMIDA':
+    case 'SUPERMERCADO':
+      return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+    case 'FARMACIA':
+    case 'SALUD':
+      return 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+    case 'TRANSPORTE':
+    case 'SERVICIOS':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    default:
+      return 'bg-slate-500/10 text-slate-300 border-slate-500/20'
+  }
 }
 
 interface HistoryScreenProps {
@@ -48,6 +51,8 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
   const { expenses, updateExpense } = useStore()
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all')
   const [editing, setEditing] = useState<Expense | null>(null)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
 
   const items = useMemo(() => {
     const sorted = [...expenses].sort(
@@ -58,151 +63,176 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
     return sorted.filter((expense) => expense.category === categoryFilter)
   }, [expenses, categoryFilter])
 
-  function handleSubmit(values: ExpenseFormValues) {
-    if (!editing) return
-    updateExpense(editing.id, values)
+  function closeEditor() {
     setEditing(null)
-    onUpdated()
+    setEditError(null)
+    setSavingEdit(false)
+  }
+
+  async function handleSubmit(values: ExpenseFormValues) {
+    if (!editing) return
+    setSavingEdit(true)
+    setEditError(null)
+
+    try {
+      await updateExpense(editing.id, values)
+      closeEditor()
+      onUpdated()
+    } catch (error) {
+      console.error(error)
+      setEditError('No pudimos guardar los cambios. Probá de nuevo.')
+      setSavingEdit(false)
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="font-sans text-3xl font-semibold tracking-[-0.6px]">
-          Historial.
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Todos tus gastos, del más nuevo al más viejo.
-        </p>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-semibold tracking-tight">Historial.</h2>
+          <p className="text-sm text-muted-foreground font-mono uppercase tracking-widest text-[10px]">
+            {items.length} registros detectados en el sistema
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Gastos</CardTitle>
-          <CardDescription>{`${items.length} resultado${items.length === 1 ? '' : 's'}.`}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="category-filter" className="text-sm font-medium">
-                Filtrar por categoría
-              </label>
-              <select
-                id="category-filter"
-                value={categoryFilter}
-                onChange={(event) =>
-                  setCategoryFilter(event.target.value as Category | 'all')
-                }
-                className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-transparent"
-              >
-                <option value="all">Todas las categorías</option>
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {translateCategory(category)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="date-filter" className="text-sm font-medium">
-                Filtrar por fecha
-              </label>
-              <div title="Próximamente">
-                <Button
-                  id="date-filter"
-                  variant="outline"
-                  className="w-full justify-start text-muted-foreground opacity-50 cursor-not-allowed"
-                  disabled
-                >
-                  Seleccionar fecha
-                </Button>
-              </div>
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Category Filter */}
+          <div className="flex items-center gap-2 bg-surface-1 hairline-border rounded-md px-3 py-1.5 shadow-sm">
+            <Filter
+              className="h-3.5 w-3.5 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <label htmlFor="category-filter" className="sr-only">
+              Filtrar por categoría
+            </label>
+            <select
+              id="category-filter"
+              aria-label="Filtrar por categoría"
+              value={categoryFilter}
+              onChange={(event) =>
+                setCategoryFilter(event.target.value as Category | 'all')
+              }
+              className="bg-transparent border-none outline-none text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <option value="all">Todas las categorías</option>
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {translateCategory(category)}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {items.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Fecha
-                  </TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Descripción
-                  </TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Categoría
-                  </TableHead>
-                  <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Monto
-                  </TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Acciones
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>{formatDate(expense.date)}</TableCell>
-                    <TableCell className="font-medium">
-                      {expense.description}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          'rounded-xs',
-                          CATEGORY_STYLES[expense.category],
-                        )}
-                      >
-                        {translateCategory(expense.category)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-foreground dark:text-[#f7f8f8]">
-                      {formatARS(expense.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditing(expense)}
-                        >
-                          Editar
-                        </Button>
-                        <div title="Próximamente" className="inline-block">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled
-                            className="h-8 w-8 text-muted-foreground"
-                            aria-label="Eliminar"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="rounded-xl border border-dashed border-border p-6 text-center">
-              <p className="font-medium">No hay gastos en esta categoría</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Probá cambiar el filtro.
-              </p>
-            </div>
-          )}
+          {/* Date Filter Placeholder */}
+          <div title="Próximamente">
+            <Button
+              id="date-filter"
+              variant="outline"
+              size="sm"
+              disabled
+              className="h-9 px-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground opacity-50 cursor-not-allowed border-dashed"
+              aria-label="Filtrar por fecha"
+            >
+              <Calendar className="mr-2 h-3.5 w-3.5" />
+              Seleccionar fecha
+            </Button>
+          </div>
+        </div>
+      </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Eliminar gastos llega más adelante. Por ahora podés editarlos.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="bg-surface-1 hairline-border rounded-xl overflow-hidden shadow-level-3">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-border bg-white/[0.02] hover:bg-white/[0.02]">
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
+                Estado
+              </TableHead>
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
+                Fecha
+              </TableHead>
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
+                Descripción
+              </TableHead>
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold text-right">
+                Categoría
+              </TableHead>
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold text-right">
+                Monto (ARS)
+              </TableHead>
+              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold text-right">
+                Acciones
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((expense) => (
+              <TableRow
+                key={expense.id}
+                className="hover:bg-white/[0.03] transition-colors group border-b border-border last:border-0"
+              >
+                <TableCell className="py-4 px-6">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
+                </TableCell>
+                <TableCell className="py-4 px-6 text-[11px] font-mono text-muted-foreground">
+                  {formatDate(expense.date)}
+                </TableCell>
+                <TableCell className="py-4 px-6 text-sm font-medium text-foreground">
+                  {expense.description}
+                </TableCell>
+                <TableCell className="py-4 px-6 text-right">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'rounded-[4px] px-2 py-0.5 text-[10px] font-mono border-hairline transition-colors',
+                      getCategoryStyle(expense.category),
+                    )}
+                  >
+                    {translateCategory(expense.category)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-4 px-6 text-right font-mono text-sm group-hover:text-primary transition-colors">
+                  {formatARS(expense.amount)}
+                </TableCell>
+                <TableCell className="py-4 px-6 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(expense)}
+                      className="h-8 px-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled
+                      aria-label="Eliminar"
+                      className="h-8 w-8 text-muted-foreground/30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {items.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="py-20 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest"
+                >
+                  Sin movimientos en esta categoría
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <p className="text-center text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em] opacity-40">
+        Eliminar gastos llega más adelante. Por ahora podés editarlos.
+      </p>
 
       <ExpenseFormModal
         key={editing?.id ?? 'closed'}
@@ -217,8 +247,10 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
               }
             : undefined
         }
-        onDismiss={() => setEditing(null)}
+        onDismiss={closeEditor}
         onSubmit={handleSubmit}
+        submitting={savingEdit}
+        submitError={editError}
       />
     </div>
   )

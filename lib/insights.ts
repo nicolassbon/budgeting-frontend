@@ -3,9 +3,24 @@ import { CATEGORIES, type Category, type Expense } from './types'
 import { useStore } from './store'
 
 export const CATEGORY_COLOR: Record<Category, string> = {
-  GROCERIES: '#5e6ad2',
-  PHARMA: '#828fff',
-  AUTO: '#7a7fad',
+  COMIDA: '#5e6ad2',
+  SUPERMERCADO: '#4f46e5',
+  FARMACIA: '#828fff',
+  ROPA: '#db2777',
+  TRANSPORTE: '#7a7fad',
+  VIVIENDA: '#0f766e',
+  HOGAR: '#0f766e',
+  SERVICIOS: '#0891b2',
+  ENTRETENIMIENTO: '#7c3aed',
+  EDUCACION: '#2563eb',
+  SALUD: '#dc2626',
+  CUIDADO_PERSONAL: '#d946ef',
+  MASCOTAS: '#f59e0b',
+  SUSCRIPCIONES: '#8b5cf6',
+  REGALOS: '#ec4899',
+  IMPUESTOS: '#ea580c',
+  DEUDAS: '#b91c1c',
+  OTROS: '#6b7280',
 }
 
 export interface CategoryBreakdown {

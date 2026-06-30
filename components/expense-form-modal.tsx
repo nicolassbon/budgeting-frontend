@@ -21,7 +21,9 @@ interface ExpenseFormModalProps {
     category?: Category | null
   }
   onDismiss: () => void
-  onSubmit: (values: ExpenseFormValues) => void
+  onSubmit: (values: ExpenseFormValues) => void | Promise<void>
+  submitting?: boolean
+  submitError?: string | null
 }
 
 export function ExpenseFormModal({
@@ -30,6 +32,8 @@ export function ExpenseFormModal({
   initial,
   onDismiss,
   onSubmit,
+  submitting = false,
+  submitError = null,
 }: ExpenseFormModalProps) {
   const [description, setDescription] = useState(initial?.description ?? '')
   const [amount, setAmount] = useState(
@@ -112,10 +116,21 @@ export function ExpenseFormModal({
               Revisá los datos antes de confirmar.
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onDismiss}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDismiss}
+            disabled={submitting}
+          >
             Cerrar
           </Button>
         </div>
+
+        {submitError && (
+          <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {submitError}
+          </p>
+        )}
 
         <div className="space-y-5">
           <div className="space-y-2">
@@ -182,11 +197,15 @@ export function ExpenseFormModal({
         </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">
-          <Button variant="ghost" onClick={onDismiss}>
+          <Button variant="ghost" onClick={onDismiss} disabled={submitting}>
             Cancelar
           </Button>
-          <Button onClick={submit}>
-            {mode === 'edit' ? 'Guardar cambios' : 'Guardar gasto'}
+          <Button onClick={submit} disabled={submitting}>
+            {submitting
+              ? 'Guardando...'
+              : mode === 'edit'
+                ? 'Guardar cambios'
+                : 'Guardar gasto'}
           </Button>
         </div>
       </div>

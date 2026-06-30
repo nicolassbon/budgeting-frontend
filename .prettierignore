@@ -5,3 +5,4 @@ dist
 build
 pnpm-lock.yaml
 tsconfig.tsbuildinfo
+.kombai/

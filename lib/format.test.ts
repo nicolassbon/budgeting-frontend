@@ -21,7 +21,7 @@ describe('format utilities', () => {
   it('should interpret simple expense prompts', () => {
     const res = interpretExpense('70 mil en el super')
     expect(res.amount).toBe(70000)
-    expect(res.category).toBe('GROCERIES')
+    expect(res.category).toBe('COMIDA')
   })
 })
 
@@ -50,8 +50,8 @@ describe('HttpCaptureService', () => {
       status: 200,
       json: async () => ({
         description: 'Supermercado Coto',
-        amount: 350000,
-        category: 'GROCERIES',
+        amount: 3500,
+        category: 'COMIDA',
       }),
     })
 
@@ -70,7 +70,7 @@ describe('HttpCaptureService', () => {
     expect(res).toEqual({
       description: 'Supermercado Coto',
       amount: 3500,
-      category: 'GROCERIES',
+      category: 'COMIDA',
     })
   })
 

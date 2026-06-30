@@ -26,6 +26,12 @@ type CaptureState =
   | 'preview'
   | 'saving'
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : null
+}
+
 const EXAMPLES = ['70 mil en el super', 'Farmacia 12.300', 'Cargué nafta 45000']
 const SIMULATED_DICTATION = 'Gasté 32500 en el super'
 
@@ -36,6 +42,7 @@ interface CaptureScreenProps {
 
 export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
   const { addExpense } = useStore()
+  const screenFileInputRef = useRef<HTMLInputElement>(null)
 
   const [state, setState] = useState<CaptureState>('idle')
   const [text, setText] = useState('')
@@ -156,6 +163,44 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
     setState('idle')
   }
 
+  async function handleScreenFileChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setState('interpreting')
+    try {
+      const csrfToken = getCookie('XSRF-TOKEN')
+      const headers: Record<string, string> = {}
+      if (csrfToken) {
+        headers['X-XSRF-TOKEN'] = csrfToken
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        throw new Error(`Failed to transcribe file: status ${res.status}`)
+      }
+
+      const transcribedText = await res.text()
+      setText(transcribedText)
+      interpret(transcribedText)
+    } catch (error) {
+      console.error(error)
+      setState('idle')
+    } finally {
+      if (screenFileInputRef.current) screenFileInputRef.current.value = ''
+    }
+  }
+
   function resetAll() {
     clearTimers()
     setText('')
@@ -269,13 +314,29 @@ export function CaptureScreen({ onSaved, onOpenHelp }: CaptureScreenProps) {
                   Detener
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={startRecording}
-                  disabled={busy}
-                >
-                  Dictar
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={startRecording}
+                    disabled={busy}
+                  >
+                    Dictar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => screenFileInputRef.current?.click()}
+                    disabled={busy}
+                  >
+                    Subir audio
+                  </Button>
+                  <input
+                    ref={screenFileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={handleScreenFileChange}
+                  />
+                </>
               )}
             </div>
 

@@ -10,7 +10,7 @@
     --card-foreground: #09090b;
     --popover: #ffffff;
     --popover-foreground: #09090b;
-    --primary: #4f46e5;
+    --primary: #5e6ad2;
     --primary-foreground: #ffffff;
     --secondary: #f4f4f5;
     --secondary-foreground: #09090b;
@@ -24,6 +24,10 @@
     --input: #ffffff;
     --ring: #5e69d1;
     --radius: 8px;
+
+    /* Technical Signal Tokens */
+    --cyan: #00d2ff;
+    --success: #27a644;
 
     /* Hairline border-based lifts of Linear */
     --shadow-l1: 0 0 0 1px #e4e4e7;
@@ -55,6 +59,10 @@
     --ring: #5e69d1;
     --radius: 8px;
 
+    /* Technical Signal Tokens */
+    --cyan: #00d2ff;
+    --success: #27a644;
+
     /* Hairline border-based lifts of Linear */
     --shadow-l1: 0 0 0 1px #23252a;
     --shadow-l2: 0 0 0 1px #34343a;
@@ -81,7 +89,41 @@
 }
 
 @layer utilities {
+  .hairline-border {
+    border: 1px solid var(--border);
+  }
+
+  .glow-lavender {
+    box-shadow: 0 0 20px rgba(94, 106, 210, 0.2);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+  }
+
+  .text-cyan {
+    color: var(--cyan);
+  }
+
+  .bg-cyan {
+    background-color: var(--cyan);
+  }
+
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring;
   }
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1.4);
+  }
+}
+
+.wave-bar-animation {
+  animation: wave 1s ease-in-out infinite;
 }

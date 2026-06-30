@@ -1,4 +1,4 @@
-import type { Category } from './types'
+import { isCategory, type Category } from './types'
 
 // ARS formatting
 export function formatARS(amount: number | null | undefined): string {
@@ -20,7 +20,7 @@ export function formatDate(iso: string): string {
 // The backend does not return a structured draft, so the UI parses what it can
 // and always lets the user correct the result before saving.
 const CATEGORY_KEYWORDS: Record<Category, string[]> = {
-  GROCERIES: [
+  COMIDA: [
     'super',
     'supermercado',
     'almacen',
@@ -34,7 +34,8 @@ const CATEGORY_KEYWORDS: Record<Category, string[]> = {
     'dia',
     'chino',
   ],
-  PHARMA: [
+  SUPERMERCADO: ['supermercado', 'hiper', 'mayorista'],
+  FARMACIA: [
     'farmacia',
     'remedio',
     'remedios',
@@ -43,7 +44,7 @@ const CATEGORY_KEYWORDS: Record<Category, string[]> = {
     'pastillas',
     'farmacity',
   ],
-  AUTO: [
+  TRANSPORTE: [
     'auto',
     'nafta',
     'combustible',
@@ -58,6 +59,28 @@ const CATEGORY_KEYWORDS: Record<Category, string[]> = {
     'mecanico',
     'mecánico',
   ],
+  ROPA: ['ropa', 'remera', 'pantalon', 'pantalón', 'zapatilla', 'zapatillas'],
+  VIVIENDA: ['alquiler', 'expensas', 'hipoteca', 'consorcio'],
+  HOGAR: ['hogar', 'limpieza', 'mueble', 'muebles', 'ferreteria', 'ferretería'],
+  SERVICIOS: [
+    'servicio',
+    'luz',
+    'agua',
+    'gas',
+    'internet',
+    'telefono',
+    'teléfono',
+  ],
+  ENTRETENIMIENTO: ['cine', 'salida', 'streaming', 'juego', 'juegos'],
+  EDUCACION: ['colegio', 'curso', 'facultad', 'universidad', 'libro', 'libros'],
+  SALUD: ['consulta', 'doctor', 'médico', 'medico', 'obra social', 'estudio'],
+  CUIDADO_PERSONAL: ['peluqueria', 'peluquería', 'cosmetica', 'cosmética'],
+  MASCOTAS: ['mascota', 'veterinaria', 'veterinario', 'alimento balanceado'],
+  SUSCRIPCIONES: ['suscripcion', 'suscripción', 'netflix', 'spotify', 'plan'],
+  REGALOS: ['regalo', 'regalos'],
+  IMPUESTOS: ['impuesto', 'impuestos', 'afip', 'abl'],
+  DEUDAS: ['deuda', 'cuota', 'prestamo', 'préstamo', 'tarjeta'],
+  OTROS: [],
 }
 
 export interface Interpretation {
@@ -134,19 +157,14 @@ export class HttpCaptureService implements CaptureService {
 
     const data = await res.json()
 
+    // The `/transactions/interpret` draft endpoint returns `amount` in ARS
+    // pesos (not centavos, unlike the persisted transactions API). Preserve
+    // the value as-is for the preview; unit conversion for persisted
+    // expenses happens in `lib/store.tsx`.
     const amount =
-      data.amount !== null && data.amount !== undefined
-        ? data.amount / 100
-        : null
+      data.amount !== null && data.amount !== undefined ? data.amount : null
 
-    let category: Category | null = null
-    if (
-      data.category === 'GROCERIES' ||
-      data.category === 'PHARMA' ||
-      data.category === 'AUTO'
-    ) {
-      category = data.category
-    }
+    const category = isCategory(data.category) ? data.category : null
 
     const description = data.description || rawText
 

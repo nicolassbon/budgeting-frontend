@@ -8,28 +8,28 @@ describe('insights utilities', () => {
       id: '1',
       description: 'Supermercado Coto',
       amount: 10000,
-      category: 'GROCERIES',
+      category: 'COMIDA',
       date: '2026-06-15T10:00:00.000Z',
     },
     {
       id: '2',
       description: 'Farmacia Remedios',
       amount: 5000,
-      category: 'PHARMA',
+      category: 'FARMACIA',
       date: '2026-06-16T12:00:00.000Z',
     },
     {
       id: '3',
       description: 'Carga Nafta YPF',
       amount: 15000,
-      category: 'AUTO',
+      category: 'TRANSPORTE',
       date: '2026-06-17T15:30:00.000Z',
     },
     {
       id: '4',
       description: 'Otro mes',
       amount: 8000,
-      category: 'GROCERIES',
+      category: 'COMIDA',
       date: '2026-05-15T10:00:00.000Z', // May, not June
     },
   ]
@@ -52,21 +52,23 @@ describe('insights utilities', () => {
 
   it('should compute correct category breakdowns and sort them descending by total', () => {
     const stats = computeMonthStats(mockExpenses, refDate)
-    expect(stats.breakdown).toHaveLength(3)
+    const nonZeroBreakdown = stats.breakdown.filter((item) => item.total > 0)
 
-    expect(stats.breakdown[0].category).toBe('AUTO')
-    expect(stats.breakdown[0].total).toBe(15000)
-    expect(stats.breakdown[0].share).toBe(0.5)
+    expect(nonZeroBreakdown).toHaveLength(3)
 
-    expect(stats.breakdown[1].category).toBe('GROCERIES')
-    expect(stats.breakdown[1].total).toBe(10000)
-    expect(stats.breakdown[1].share).toBeCloseTo(0.333, 2)
+    expect(nonZeroBreakdown[0].category).toBe('TRANSPORTE')
+    expect(nonZeroBreakdown[0].total).toBe(15000)
+    expect(nonZeroBreakdown[0].share).toBe(0.5)
 
-    expect(stats.breakdown[2].category).toBe('PHARMA')
-    expect(stats.breakdown[2].total).toBe(5000)
-    expect(stats.breakdown[2].share).toBeCloseTo(0.167, 2)
+    expect(nonZeroBreakdown[1].category).toBe('COMIDA')
+    expect(nonZeroBreakdown[1].total).toBe(10000)
+    expect(nonZeroBreakdown[1].share).toBeCloseTo(0.333, 2)
+
+    expect(nonZeroBreakdown[2].category).toBe('FARMACIA')
+    expect(nonZeroBreakdown[2].total).toBe(5000)
+    expect(nonZeroBreakdown[2].share).toBeCloseTo(0.167, 2)
 
     expect(stats.topCategory).not.toBeNull()
-    expect(stats.topCategory!.category).toBe('AUTO')
+    expect(stats.topCategory!.category).toBe('TRANSPORTE')
   })
 })

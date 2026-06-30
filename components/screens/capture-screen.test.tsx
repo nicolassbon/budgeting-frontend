@@ -31,8 +31,8 @@ describe('CaptureScreen', () => {
       status: 200,
       json: async () => ({
         description: '70 mil en el super',
-        amount: 7000000,
-        category: 'GROCERIES',
+        amount: 70000,
+        category: 'COMIDA',
       }),
     })
 
@@ -60,7 +60,7 @@ describe('CaptureScreen', () => {
     ).toBeInTheDocument()
     expect(screen.getByDisplayValue('70 mil en el super')).toBeInTheDocument()
     expect(screen.getByLabelText('Monto')).toHaveValue(70000)
-    expect(screen.getByLabelText('Categoría')).toHaveValue('GROCERIES')
+    expect(screen.getByLabelText('Categoría')).toHaveValue('COMIDA')
     expect(addExpense).not.toHaveBeenCalled()
     expect(onSaved).not.toHaveBeenCalled()
 
@@ -75,7 +75,7 @@ describe('CaptureScreen', () => {
     expect(addExpense).toHaveBeenCalledWith({
       description: '70 mil en el super',
       amount: 70000,
-      category: 'GROCERIES',
+      category: 'COMIDA',
     })
     expect(onSaved).toHaveBeenCalledTimes(1)
   })

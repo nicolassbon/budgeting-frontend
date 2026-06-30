@@ -10,3 +10,7 @@ node_modules
 
 # Codegraph
 .codegraph/
+
+# Generated / tooling
+tsconfig.tsbuildinfo
+.kombai/

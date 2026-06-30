@@ -9,13 +9,26 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Category, Expense } from './types'
+import { CATEGORIES, isCategory, type Category, type Expense } from './types'
 import { useAuth } from './auth'
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
   return match ? decodeURIComponent(match[2]) : null
+}
+
+function buildMutationHeaders(): Record<string, string> {
+  const csrfToken = getCookie('XSRF-TOKEN')
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (csrfToken) {
+    headers['X-XSRF-TOKEN'] = csrfToken
+  }
+
+  return headers
 }
 
 export interface ExpenseRepository {
@@ -29,8 +42,7 @@ export class HttpExpenseRepository implements ExpenseRepository {
   constructor(public email?: string) {}
 
   async fetchExpenses(): Promise<Expense[]> {
-    const categories: Category[] = ['GROCERIES', 'PHARMA', 'AUTO']
-    const urls = categories.map((cat) => `/transactions/${cat}`)
+    const urls = CATEGORIES.map((cat) => `/transactions/${cat}`)
 
     const responses = await Promise.all(urls.map((url) => fetch(url)))
 
@@ -45,8 +57,8 @@ export class HttpExpenseRepository implements ExpenseRepository {
     const dataArrays = await Promise.all(responses.map((res) => res.json()))
     const flattened: Expense[] = []
 
-    for (let i = 0; i < categories.length; i++) {
-      const category = categories[i]
+    for (let i = 0; i < CATEGORIES.length; i++) {
+      const category = CATEGORIES[i]
       const items = dataArrays[i]
       if (Array.isArray(items)) {
         for (const item of items) {
@@ -54,8 +66,8 @@ export class HttpExpenseRepository implements ExpenseRepository {
             id: String(item.id),
             description: item.description || '',
             amount: item.amount / 100,
-            category: item.category || category,
-            date: new Date().toISOString(),
+            category: isCategory(item.category) ? item.category : category,
+            date: item.date || new Date().toISOString(),
           })
         }
       }
@@ -65,17 +77,9 @@ export class HttpExpenseRepository implements ExpenseRepository {
   }
 
   async createExpense(input: Omit<Expense, 'id' | 'date'>): Promise<Expense> {
-    const csrfToken = getCookie('XSRF-TOKEN')
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken
-    }
-
     const res = await fetch('/transactions', {
       method: 'POST',
-      headers,
+      headers: buildMutationHeaders(),
       body: JSON.stringify({
         description: input.description,
         category: input.category,
@@ -100,13 +104,43 @@ export class HttpExpenseRepository implements ExpenseRepository {
   }
 
   async updateExpense(id: string, updates: Partial<Expense>): Promise<Expense> {
+    const body: {
+      description?: string
+      category?: Category
+      amount?: number
+      date?: string
+    } = {
+      description: updates.description,
+      category: updates.category,
+      amount:
+        updates.amount !== undefined
+          ? Math.round(updates.amount * 100)
+          : undefined,
+    }
+
+    if (updates.date !== undefined) {
+      body.date = updates.date
+    }
+
+    const res = await fetch(`/transactions/${id}`, {
+      method: 'PUT',
+      headers: buildMutationHeaders(),
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to update expense in backend: status ${res.status}`,
+      )
+    }
+
+    const data = await res.json()
     return {
-      id,
-      description: '',
-      amount: 0,
-      category: 'GROCERIES',
-      date: new Date().toISOString(),
-      ...updates,
+      id: String(data.id ?? id),
+      description: data.description || updates.description || '',
+      amount: data.amount / 100,
+      category: data.category || updates.category || 'COMIDA',
+      date: data.date || updates.date || new Date().toISOString(),
     } as Expense
   }
 
@@ -144,12 +178,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     let active = true
     setLoading(true)
-    repository.fetchExpenses().then((data) => {
-      if (active) {
-        setExpenses(data)
-        setLoading(false)
-      }
-    })
+    repository
+      .fetchExpenses()
+      .then((data) => {
+        if (active) {
+          setExpenses(data)
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        console.error(err)
+        if (active) {
+          setLoading(false)
+        }
+      })
 
     return () => {
       active = false
@@ -173,15 +215,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateExpense = useCallback(
     async (id: string, updates: Partial<Expense>) => {
       if (!repository) return
+      const currentExpense = expenses.find((expense) => expense.id === id)
+      const payload: Partial<Expense> = {
+        description: updates.description ?? currentExpense?.description,
+        amount: updates.amount ?? currentExpense?.amount,
+        category: updates.category ?? currentExpense?.category,
+      }
+
+      if (updates.date !== undefined) {
+        payload.date = updates.date
+      }
+
       setLoading(true)
       try {
-        const updated = await repository.updateExpense(id, updates)
+        const updated = await repository.updateExpense(id, payload)
         setExpenses((prev) => prev.map((e) => (e.id === id ? updated : e)))
       } finally {
         setLoading(false)
       }
     },
-    [repository],
+    [expenses, repository],
   )
 
   const deleteExpense = useCallback(
