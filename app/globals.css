@@ -71,6 +71,17 @@
     --shadow-l5: 0 0 0 1px #3e3e44;
   }
 
+  /* Native <select> <option> elements: when `color-scheme: dark` is
+     active (see lib/theme.ts) Chromium paints the popup with light
+     text over a light surface, inheriting the trigger's
+     `text-muted-foreground`. Force semantic popover tokens so options
+     stay legible in dark mode. */
+  .dark select option,
+  .dark option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+
   * {
     @apply border-border;
   }
