@@ -294,7 +294,7 @@ export function CaptureConsole({ onSaved }: CaptureConsoleProps) {
               {modalState === 'idle' && (
                 <div className="flex flex-col items-center text-center py-4">
                   <p className="text-base font-medium text-foreground/90 mb-6">
-                    Contanos tu gasto y nosotros te lo cargamos
+                    Contanos tu gasto, lo interpretamos y vos confirmás
                   </p>
 
                   {errorMessage && (

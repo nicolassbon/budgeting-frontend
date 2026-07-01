@@ -76,7 +76,7 @@ describe('CaptureConsole', () => {
       fireEvent.click(screen.getByLabelText('Capturar gasto'))
 
       expect(
-        screen.getByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).toBeInTheDocument()
       expect(screen.getByLabelText('Iniciar grabación')).toBeInTheDocument()
       expect(
@@ -93,13 +93,13 @@ describe('CaptureConsole', () => {
       // Open modal
       fireEvent.keyDown(window, { ctrlKey: true, key: 'k' })
       expect(
-        screen.getByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).toBeInTheDocument()
 
       // Close modal
       fireEvent.keyDown(window, { ctrlKey: true, key: 'k' })
       expect(
-        screen.queryByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.queryByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).not.toBeInTheDocument()
     })
   })
@@ -114,7 +114,7 @@ describe('CaptureConsole', () => {
       })
 
       expect(
-        screen.getByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).toBeInTheDocument()
     })
   })
@@ -126,12 +126,12 @@ describe('CaptureConsole', () => {
 
       fireEvent.click(screen.getByLabelText('Capturar gasto'))
       expect(
-        screen.getByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).toBeInTheDocument()
 
       fireEvent.keyDown(window, { key: 'Escape' })
       expect(
-        screen.queryByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.queryByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).not.toBeInTheDocument()
     })
   })
@@ -144,7 +144,7 @@ describe('CaptureConsole', () => {
       fireEvent.click(screen.getByLabelText('Capturar gasto'))
 
       expect(
-        screen.getByText('Contanos tu gasto y nosotros te lo cargamos'),
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
       ).toBeInTheDocument()
       expect(screen.getByLabelText('Iniciar grabación')).toBeInTheDocument()
       expect(

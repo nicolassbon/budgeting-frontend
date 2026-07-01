@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,8 @@ export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
     confirm?: string
   }>({})
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   function submit() {
     const next: typeof errors = {}
@@ -93,13 +96,30 @@ export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
           <label htmlFor="signup-password" className="text-sm font-medium">
             Contraseña
           </label>
-          <Input
-            id="signup-password"
-            type="password"
-            value={password}
-            placeholder="Creá una contraseña"
-            onChange={(event) => setPassword(event.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="signup-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              placeholder="Creá una contraseña"
+              onChange={(event) => setPassword(event.target.value)}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={
+                showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              }
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground">Mínimo 6 caracteres.</p>
           {errors.password && (
             <p className="text-sm text-destructive">{errors.password}</p>
@@ -110,13 +130,30 @@ export function SignupScreen({ onSignup, onGoToLogin }: SignupScreenProps) {
           <label htmlFor="signup-confirm" className="text-sm font-medium">
             Repetir contraseña
           </label>
-          <Input
-            id="signup-confirm"
-            type="password"
-            value={confirm}
-            placeholder="Repetí la contraseña"
-            onChange={(event) => setConfirm(event.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="signup-confirm"
+              type={showConfirm ? 'text' : 'password'}
+              value={confirm}
+              placeholder="Repetí la contraseña"
+              onChange={(event) => setConfirm(event.target.value)}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              onClick={() => setShowConfirm(!showConfirm)}
+              aria-label={
+                showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              }
+            >
+              {showConfirm ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {errors.confirm && (
             <p className="text-sm text-destructive">{errors.confirm}</p>
           )}

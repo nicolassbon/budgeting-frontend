@@ -127,8 +127,7 @@ function ComparisonBlock({ comparison }: { comparison: Comparison }) {
       </div>
       {!comparison.hasPreviousData ? (
         <p className="text-sm text-muted-foreground">
-          Mes anterior sin movimientos. Cuando tengas datos, comparamos la
-          evolución sin inventar porcentajes.
+          Mes anterior sin movimientos.
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">

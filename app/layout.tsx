@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Budgeting — Control de gastos',
+  title: 'Budgeting',
   description:
     'Registrá tus gastos cotidianos con la menor fricción posible. Contá o dictá tu gasto y guardalo en segundos.',
 }
