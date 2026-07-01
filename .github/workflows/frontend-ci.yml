@@ -1,0 +1,78 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/frontend-ci.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+      - 'next.config.mjs'
+      - 'eslint.config.mjs'
+      - 'vitest.config.ts'
+      - 'tailwind.config.ts'
+      - 'postcss.config.mjs'
+      - '.prettierrc*'
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'public/**'
+  pull_request:
+    paths:
+      - '.github/workflows/frontend-ci.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+      - 'next.config.mjs'
+      - 'eslint.config.mjs'
+      - 'vitest.config.ts'
+      - 'tailwind.config.ts'
+      - 'postcss.config.mjs'
+      - '.prettierrc*'
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'public/**'
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+      - name: Build application
+        run: pnpm build
