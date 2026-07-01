@@ -1,8 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  computeComparison,
   computeMonthStats,
   getMonthExpenses,
+  getWeekExpenses,
   mapDashboardSummaryToMonthStats,
   useDashboardStats,
 } from './insights'
@@ -101,6 +103,115 @@ describe('insights utilities', () => {
     expect(nonZeroBreakdown[2].share).toBeCloseTo(0.167, 2)
     expect(stats.topCategory).not.toBeNull()
     expect(stats.topCategory!.category).toBe('TRANSPORTE')
+  })
+
+  it('computes month-over-month comparison when both months have expenses', () => {
+    const comparison = computeComparison(
+      [
+        ...mockExpenses,
+        {
+          id: '5',
+          description: 'Current month extra',
+          amount: 2000,
+          category: 'SERVICIOS',
+          date: '2026-06-18T10:00:00.000Z',
+        },
+      ],
+      refDate,
+    )
+
+    expect(comparison.currentMonthTotal).toBe(32000)
+    expect(comparison.previousMonthTotal).toBe(8000)
+    expect(comparison.absoluteDelta).toBe(24000)
+    expect(comparison.percentageDelta).toBe(300)
+    expect(comparison.direction).toBe('current-higher')
+    expect(comparison.currentMonthLabel).toBe('junio 2026')
+    expect(comparison.previousMonthLabel).toBe('mayo 2026')
+    expect(comparison.hasPreviousData).toBe(true)
+  })
+
+  it('returns a null percentage when the previous month has no movements', () => {
+    const comparison = computeComparison(
+      mockExpenses.filter((expense) => expense.id !== '4'),
+      refDate,
+    )
+
+    expect(comparison.currentMonthTotal).toBe(30000)
+    expect(comparison.previousMonthTotal).toBe(0)
+    expect(comparison.absoluteDelta).toBe(30000)
+    expect(comparison.percentageDelta).toBeNull()
+    expect(comparison.direction).toBe('current-higher')
+    expect(comparison.hasPreviousData).toBe(false)
+  })
+
+  it('classifies equal month totals without a percentage delta', () => {
+    const comparison = computeComparison(
+      [
+        {
+          id: 'current',
+          description: 'Current month',
+          amount: 12000,
+          category: 'COMIDA',
+          date: '2026-06-10T10:00:00.000Z',
+        },
+        {
+          id: 'previous',
+          description: 'Previous month',
+          amount: 12000,
+          category: 'COMIDA',
+          date: '2026-05-10T10:00:00.000Z',
+        },
+      ],
+      refDate,
+    )
+
+    expect(comparison.currentMonthTotal).toBe(12000)
+    expect(comparison.previousMonthTotal).toBe(12000)
+    expect(comparison.absoluteDelta).toBe(0)
+    expect(comparison.percentageDelta).toBe(0)
+    expect(comparison.direction).toBe('equal')
+    expect(comparison.hasPreviousData).toBe(true)
+  })
+
+  it('filters the current Monday-start local week', () => {
+    const weekExpenses = getWeekExpenses(
+      [
+        {
+          id: 'sunday-before',
+          description: 'Sunday before',
+          amount: 1,
+          category: 'COMIDA',
+          date: '2026-06-21T12:00:00',
+        },
+        {
+          id: 'monday-start',
+          description: 'Monday start',
+          amount: 2,
+          category: 'COMIDA',
+          date: '2026-06-22T00:00:00',
+        },
+        {
+          id: 'sunday-end',
+          description: 'Sunday end',
+          amount: 3,
+          category: 'COMIDA',
+          date: '2026-06-28T23:59:59',
+        },
+        {
+          id: 'next-monday',
+          description: 'Next Monday',
+          amount: 4,
+          category: 'COMIDA',
+          date: '2026-06-29T00:00:00',
+        },
+      ],
+      new Date('2026-06-25T12:00:00.000Z'),
+    )
+
+    expect(weekExpenses.map((expense) => expense.id)).toEqual([
+      'monday-start',
+      'sunday-end',
+    ])
   })
 
   it('should map dashboard backend summary using cent values and backend period', () => {

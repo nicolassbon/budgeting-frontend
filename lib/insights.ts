@@ -38,6 +38,17 @@ export interface MonthStats {
   monthLabel: string
 }
 
+export interface Comparison {
+  currentMonthTotal: number
+  previousMonthTotal: number
+  absoluteDelta: number
+  percentageDelta: number | null
+  direction: 'current-higher' | 'current-lower' | 'equal'
+  currentMonthLabel: string
+  previousMonthLabel: string
+  hasPreviousData: boolean
+}
+
 interface DashboardCategorySummary {
   category: string
   totalAmountCents: number
@@ -83,6 +94,62 @@ export function getMonthExpenses(
   })
 }
 
+export function getWeekExpenses(
+  expenses: Expense[],
+  ref = new Date(),
+): Expense[] {
+  const start = new Date(ref)
+  start.setHours(0, 0, 0, 0)
+  const day = start.getDay()
+  const daysSinceMonday = day === 0 ? 6 : day - 1
+  start.setDate(start.getDate() - daysSinceMonday)
+
+  const end = new Date(start)
+  end.setDate(start.getDate() + 7)
+
+  return expenses.filter((expense) => {
+    const date = new Date(expense.date)
+    return date >= start && date < end
+  })
+}
+
+function getPreviousMonth(ref: Date): Date {
+  return new Date(ref.getFullYear(), ref.getMonth() - 1, 1)
+}
+
+function getMonthLabel(ref: Date): string {
+  return `${MONTHS[ref.getMonth()]} ${ref.getFullYear()}`
+}
+
+export function computeComparison(
+  expenses: Expense[],
+  ref = new Date(),
+): Comparison {
+  const previousRef = getPreviousMonth(ref)
+  const currentMonthTotal = getMonthExpenses(expenses, ref).reduce(
+    (acc, expense) => acc + expense.amount,
+    0,
+  )
+  const previousMonthTotal = getMonthExpenses(expenses, previousRef).reduce(
+    (acc, expense) => acc + expense.amount,
+    0,
+  )
+  const delta = currentMonthTotal - previousMonthTotal
+
+  return {
+    currentMonthTotal,
+    previousMonthTotal,
+    absoluteDelta: Math.abs(delta),
+    percentageDelta:
+      previousMonthTotal === 0 ? null : (delta / previousMonthTotal) * 100,
+    direction:
+      delta > 0 ? 'current-higher' : delta < 0 ? 'current-lower' : 'equal',
+    currentMonthLabel: getMonthLabel(ref),
+    previousMonthLabel: getMonthLabel(previousRef),
+    hasPreviousData: previousMonthTotal > 0,
+  }
+}
+
 export function computeMonthStats(
   expenses: Expense[],
   ref = new Date(),
@@ -110,7 +177,7 @@ export function computeMonthStats(
     average: count > 0 ? Math.round(total / count) : 0,
     breakdown,
     topCategory,
-    monthLabel: `${MONTHS[ref.getMonth()]} ${ref.getFullYear()}`,
+    monthLabel: getMonthLabel(ref),
   }
 }
 

@@ -5,29 +5,34 @@ context: |
   Tech stack: Next.js 15 App Router, React 18, TypeScript 5.7, pnpm.
   UI: shadcn/ui + Tailwind CSS foundation.
   Architecture: single-route client shell with mocked auth and in-memory React Context store.
-  Testing: Vitest + JSDOM, Testing Library, ESLint 9, Prettier 3, tsc --noEmit.
+  Testing: Vitest 4 + JSDOM, React Testing Library, ESLint 9 flat config, Prettier 3, Next build, and TypeScript via tsc --noEmit once .next types exist.
   Conventions: Tailwind utilities + shared ui primitives; es-AR UI copy.
 
 testing:
-  detected: 2026-06-27
+  detected: 2026-07-01
   strict_tdd: true
   runner:
     command: pnpm test
     framework: Vitest
     environment: jsdom
+    watch_command: pnpm test:watch
   layers:
     unit:
       available: true
       tool: Vitest
     integration:
       available: true
-      tool: Testing Library + Vitest
+      tool: React Testing Library + Vitest
     e2e:
       available: false
       tool: ''
   coverage:
     available: false
     command: ''
+  notes:
+    - Test files currently live in *.test.ts and *.test.tsx across app, components, and lib.
+    - pnpm exec tsc --noEmit requires generated .next/types; run pnpm build or pnpm dev first when those files are missing.
+    - pnpm format:check also scans openspec markdown, so stale spec docs can fail verification before app code checks run.
   quality:
     linter:
       available: true
@@ -35,6 +40,7 @@ testing:
     type_checker:
       available: true
       command: pnpm exec tsc --noEmit
+      precondition: Ensure .next/types exists by running pnpm build or pnpm dev if type generation has not happened yet.
     formatter:
       available: true
       command: pnpm format:check

@@ -1,0 +1,45 @@
+schema: spec-driven
+strict_tdd: true
+
+change:
+  name: mvp-insights-comparison-budget
+  intent: Ship Insights, Comparativa mensual, and Presupuesto semanal as a new Insights section without backend changes.
+  started_at: 2026-07-01
+
+phases:
+  explore:
+    status: done
+    artifact: openspec/changes/mvp-insights-comparison-budget/exploration.md
+  propose:
+    status: done
+    artifact: openspec/changes/mvp-insights-comparison-budget/proposal.md
+  spec:
+    status: done
+    artifact: openspec/changes/mvp-insights-comparison-budget/specs/spending-insights/spec.md
+  design:
+    status: done
+    artifact: openspec/changes/mvp-insights-comparison-budget/design.md
+  tasks:
+    status: done
+    artifact: openspec/changes/mvp-insights-comparison-budget/tasks.md
+  apply:
+    status: done
+  verify:
+    status: pending
+  archive:
+    status: pending
+
+artifacts:
+  proposal: openspec/changes/mvp-insights-comparison-budget/proposal.md
+  specs: openspec/changes/mvp-insights-comparison-budget/specs/spending-insights/spec.md
+  design: openspec/changes/mvp-insights-comparison-budget/design.md
+  tasks: openspec/changes/mvp-insights-comparison-budget/tasks.md
+  applyProgress: openspec/changes/mvp-insights-comparison-budget/apply-progress.md
+  verifyReport: openspec/changes/mvp-insights-comparison-budget/verify-report.md
+
+review_forecast:
+  estimated_loc: 650
+  estimated_test_loc: 250
+  chained_pr_recommended: yes
+  budget_risk: medium-high
+  backend_worktree_recommended: no

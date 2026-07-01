@@ -15,6 +15,7 @@ import {
 import { DashboardScreen } from '@/components/screens/dashboard-screen'
 import { HistoryScreen } from '@/components/screens/history-screen'
 import { CaptureConsole } from '@/components/capture-console'
+import { InsightsScreen } from '@/components/screens/insights-screen'
 
 export type Section = 'inicio' | 'historial' | 'insights'
 
@@ -204,11 +205,7 @@ export function AppFrame({ onSignOut }: { onSignOut?: () => void }) {
           <HistoryScreen onUpdated={() => notifySaved('Gasto actualizado.')} />
         )}
 
-        {section === 'insights' && (
-          <div className="py-20 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest border border-dashed border-border rounded-xl">
-            Insights próximamente
-          </div>
-        )}
+        {section === 'insights' && <InsightsScreen />}
       </main>
 
       <CaptureConsole onSaved={notifySaved} />

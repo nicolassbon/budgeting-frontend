@@ -46,8 +46,8 @@ pnpm format:check # check formatting
 Single-page shell, **not** file-system-routed app sections.
 
 - `app/page.tsx` renders `components/budgeting-app.tsx` (a `'use client'` root).
-- `BudgetingApp` holds a local `authed` boolean and switches between `components/auth/login-screen.tsx` / `auth/signup-screen.tsx` (mock, no real auth) and `components/app-frame.tsx`. **Auth is intentionally mocked in client state** for MVP.
-- `AppFrame` holds active section state (`'capturar' | 'inicio' | 'historial'`) and switches between `components/screens/{capture,dashboard,history}-screen.tsx`. Section links use hash anchors (`#/capturar`, `#/inicio`, `#/historial`) — there is **one Next route** (`/`). Do not add `app/capturar/page.tsx`-style routes for app sections.
+- `BudgetingApp` uses `AuthProvider` from `lib/auth.tsx`; auth calls the backend session/login/register/logout endpoints (`/auth/me`, `/auth/login`, `/auth/register`, `/auth/logout`) and then renders `components/app-frame.tsx` for authenticated users.
+- `AppFrame` holds active section state (`'inicio' | 'historial' | 'insights'`) and switches between dashboard, history, and insights screens. Section links use hash anchors (`#/inicio`, `#/historial`, `#/insights`) — there is **one Next route** (`/`). Do not add `app/inicio/page.tsx`-style routes for app sections.
 - Global state lives in `lib/store.tsx` via React Context (`StoreProvider`). It is **in-memory mock state seeded with fixtures**, not persisted, not backed by an API. Do not wire it to a real backend yet.
 - Path alias: `@/*` → repo root (`@/components`, `@/lib`).
 
@@ -55,7 +55,7 @@ Single-page shell, **not** file-system-routed app sections.
 
 From `lib/types.ts` and `docs/PRD.md`:
 
-- **Categories are a closed enum**: `'Supermercado' | 'Farmacia' | 'Auto'`. Do not invent new categories.
+- **Categories are the closed `Category` union in `lib/types.ts`** (`CATEGORIES` currently includes 18 backend-aligned uppercase values such as `COMIDA`, `SUPERMERCADO`, `FARMACIA`, `TRANSPORTE`, `OTROS`). Do not invent categories outside `CATEGORIES`.
 - **`Expense.amount` is integer ARS pesos** in the mock. (When real backend integration comes: the budgeting backend returns `amount` as a Java `double` in **centavos**, not pesos — handle the unit conversion at the data layer, do not blindly render backend values as pesos.)
 - **Confirmation-before-save is mandatory.** AI-interpreted expenses must NEVER be persisted automatically. They flow through a `DraftExpense` preview (`lib/types.ts`) and require explicit user approval. See `components/screens/capture-screen.tsx`.
 - Expense parsing is a **local heuristic** (`interpretExpense` in `lib/format.ts`), not an AI service. Voice capture uses the Web Speech API with `es-AR` locale and a visual simulation fallback when unsupported.

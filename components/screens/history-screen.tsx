@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Trash2, Filter, Calendar } from 'lucide-react'
+import { Trash2, Filter } from 'lucide-react'
 
 import {
   ExpenseFormModal,
@@ -121,21 +121,6 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Date Filter Placeholder */}
-          <div title="Próximamente">
-            <Button
-              id="date-filter"
-              variant="outline"
-              size="sm"
-              disabled
-              className="h-9 px-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground opacity-50 cursor-not-allowed border-dashed"
-              aria-label="Filtrar por fecha"
-            >
-              <Calendar className="mr-2 h-3.5 w-3.5" />
-              Seleccionar fecha
-            </Button>
           </div>
         </div>
       </div>

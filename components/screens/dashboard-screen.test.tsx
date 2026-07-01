@@ -52,4 +52,33 @@ describe('DashboardScreen', () => {
     ).not.toBeInTheDocument()
     expect(screen.getByText('$ 70.000')).toBeInTheDocument()
   })
+
+  it('links dashboard insight cards to the Insights section without placeholder copy', () => {
+    mockUseDashboardStats.mockReturnValue({
+      loading: false,
+      stats: {
+        total: 120000,
+        count: 3,
+        average: 40000,
+        breakdown: [],
+        topCategory: {
+          category: 'SUPERMERCADO',
+          total: 90000,
+          share: 0.75,
+        },
+        monthLabel: 'julio 2026',
+      },
+    })
+    mockUseStore.mockReturnValue({ expenses: [] })
+
+    render(<DashboardScreen onCapture={vi.fn()} onSeeHistory={vi.fn()} />)
+
+    expect(screen.queryByText(/próximamente/i)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /ver insights/i })).toHaveLength(
+      2,
+    )
+    for (const link of screen.getAllByRole('link', { name: /ver insights/i })) {
+      expect(link).toHaveAttribute('href', '#/insights')
+    }
+  })
 })

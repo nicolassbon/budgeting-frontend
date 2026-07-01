@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/auth'
@@ -53,12 +52,6 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
       .finally(() => {
         setLoading(false)
       })
-  }
-
-  function handleThirdParty(provider: string) {
-    setPasswordError(
-      `Simulando ingreso con ${provider} (no disponible en este entorno de prueba).`,
-    )
   }
 
   return (
@@ -134,13 +127,6 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
           )}
         </div>
 
-        {passwordError.includes('Simulando ingreso') && (
-          <Alert variant="info">
-            <AlertTitle>Ingreso social</AlertTitle>
-            <AlertDescription>{passwordError}</AlertDescription>
-          </Alert>
-        )}
-
         <Button
           type="submit"
           variant="default"
@@ -149,26 +135,6 @@ export function LoginScreen({ onLogin, onGoToSignup }: LoginScreenProps) {
         >
           {loading ? 'Entrando…' : 'Iniciar sesión'}
         </Button>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            o continuá con
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Button
-              variant="outline"
-              onClick={() => handleThirdParty('Google')}
-            >
-              Google
-            </Button>
-            <Button variant="outline" onClick={() => handleThirdParty('Apple')}>
-              Apple
-            </Button>
-          </div>
-        </div>
       </form>
     </AuthShell>
   )

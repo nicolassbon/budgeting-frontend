@@ -86,12 +86,8 @@ describe('HistoryScreen', () => {
     expect(screen.queryByText('Ibuprofeno y vitaminas')).not.toBeInTheDocument()
   })
 
-  it('keeps delete and date filtering as próximamente placeholders', () => {
+  it('keeps delete filtering as próximamente placeholders', () => {
     render(<HistoryScreen onUpdated={vi.fn()} />)
-
-    expect(
-      screen.getByRole('button', { name: /filtrar por fecha/i }),
-    ).toBeDisabled()
 
     for (const button of screen.getAllByRole('button', {
       name: /eliminar/i,

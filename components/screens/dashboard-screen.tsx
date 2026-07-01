@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { TrendingUp, PieChart, ArrowRight } from 'lucide-react'
+import { PieChart, ArrowRight } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -41,27 +41,6 @@ interface DashboardScreenProps {
   onSeeHistory: () => void
 }
 
-function Sparkline() {
-  return (
-    <svg viewBox="0 0 200 80" className="w-full h-full">
-      <path
-        d="M0 60 Q 25 50, 50 65 T 100 45 T 150 70 T 200 10"
-        fill="none"
-        stroke="var(--cyan)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        className="animate-[dash_2s_ease-out_forwards]"
-        style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
-      />
-      <style>{`
-        @keyframes dash {
-          to { stroke-dashoffset: 0; }
-        }
-      `}</style>
-    </svg>
-  )
-}
-
 export function DashboardScreen({
   onCapture,
   onSeeHistory,
@@ -89,29 +68,8 @@ export function DashboardScreen({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Hero 3-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Weekly Trend */}
-        <div className="bg-surface-1 hairline-border rounded-xl p-6 flex flex-col justify-between group hover:border-primary/50 transition-all duration-300">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                Tendencia semanal
-              </span>
-              <TrendingUp className="h-4 w-4 text-cyan" />
-            </div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Promedio semanal
-            </h3>
-            <p className="text-2xl font-mono mt-1 tracking-tighter text-foreground">
-              {formatARS(stats.average * 7 || 0).split(',')[0]}
-            </p>
-          </div>
-          <div className="h-20 mt-4 relative">
-            <Sparkline />
-          </div>
-        </div>
-
+      {/* Hero 2-Column Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Total Gastado */}
         <div className="bg-surface-1 hairline-border rounded-xl overflow-hidden group hover:border-primary/50 transition-all duration-300 min-h-[220px] flex flex-col items-center justify-center p-8 text-center">
           <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-primary mb-2">
@@ -120,9 +78,12 @@ export function DashboardScreen({
           <h1 className="text-5xl font-mono font-bold tracking-[-0.04em] text-foreground">
             {formatARS(stats.total).split(',')[0]}
           </h1>
-          <div className="mt-4 px-3 py-1.5 bg-muted border border-border rounded-full text-[10px] font-mono text-muted-foreground">
-            Comparativa mensual próximamente
-          </div>
+          <a
+            href="#/insights"
+            className="mt-4 px-3 py-1.5 bg-muted border border-border rounded-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors"
+          >
+            Ver Insights
+          </a>
         </div>
 
         {/* Focus Category */}
@@ -146,7 +107,7 @@ export function DashboardScreen({
           <div className="mt-6 space-y-4">
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-muted-foreground">Participación</span>
+                <span className="text-muted-foreground">% del total</span>
                 <span className="text-foreground">
                   {stats.topCategory
                     ? Math.round(stats.topCategory.share * 100)
@@ -163,9 +124,12 @@ export function DashboardScreen({
                 />
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Presupuesto semanal próximamente.
-            </p>
+            <a
+              href="#/insights"
+              className="inline-flex text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+            >
+              Ver Insights
+            </a>
           </div>
         </div>
       </div>
