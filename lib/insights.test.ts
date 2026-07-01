@@ -54,11 +54,21 @@ describe('insights utilities', () => {
   const refDate = new Date('2026-06-27T12:00:00.000Z')
 
   beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     vi.stubGlobal('fetch', mockFetch)
     mockFetch.mockReset()
     mockStoreState.expenses = []
     mockStoreState.loading = false
     mockStoreState.expenseMutationsVersion = 0
+
+    // Default deterministic fallback timezone spy for existing tests
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      timeZone: 'America/Argentina/Buenos_Aires',
+      locale: 'es-AR',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+    })
   })
 
   it('should filter expenses to only the current month/year', () => {
@@ -171,7 +181,11 @@ describe('insights utilities', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/dashboard/spending')
+    expect(mockFetch).toHaveBeenCalledWith('/dashboard/spending', {
+      headers: {
+        'Time-Zone': 'America/Argentina/Buenos_Aires',
+      },
+    })
     expect(result.current.stats.total).toBe(150.5)
     expect(result.current.stats.count).toBe(1)
     expect(result.current.stats.monthLabel).toBe('junio 2026')
@@ -221,7 +235,11 @@ describe('insights utilities', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/dashboard/spending', {
+      headers: {
+        'Time-Zone': 'America/Argentina/Buenos_Aires',
+      },
+    })
 
     mockStoreState.expenseMutationsVersion = 1
 
@@ -231,7 +249,97 @@ describe('insights utilities', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2)
     })
 
+    expect(mockFetch).toHaveBeenNthCalledWith(2, '/dashboard/spending', {
+      headers: {
+        'Time-Zone': 'America/Argentina/Buenos_Aires',
+      },
+    })
+
     expect(result.current.stats.total).toBe(650.5)
     expect(result.current.stats.count).toBe(2)
+  })
+
+  describe('timezone header integration', () => {
+    it('should send the resolved timezone header on fetch when resolution is successful', async () => {
+      vi.spyOn(
+        Intl.DateTimeFormat.prototype,
+        'resolvedOptions',
+      ).mockReturnValue({
+        timeZone: 'Europe/Paris',
+        locale: 'fr-FR',
+        calendar: 'gregory',
+        numberingSystem: 'latn',
+      })
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      const { result } = renderHook(() => useDashboardStats())
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith('/dashboard/spending', {
+        headers: {
+          'Time-Zone': 'Europe/Paris',
+        },
+      })
+    })
+
+    it('should fallback to America/Argentina/Buenos_Aires when resolved timezone is undefined or empty', async () => {
+      vi.spyOn(
+        Intl.DateTimeFormat.prototype,
+        'resolvedOptions',
+      ).mockReturnValue({
+        timeZone: undefined as any,
+        locale: 'es-AR',
+        calendar: 'gregory',
+        numberingSystem: 'latn',
+      })
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      const { result } = renderHook(() => useDashboardStats())
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith('/dashboard/spending', {
+        headers: {
+          'Time-Zone': 'America/Argentina/Buenos_Aires',
+        },
+      })
+    })
+
+    it('should fallback to America/Argentina/Buenos_Aires when Intl is not supported', async () => {
+      vi.stubGlobal('Intl', undefined)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+
+      const { result } = renderHook(() => useDashboardStats())
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith('/dashboard/spending', {
+        headers: {
+          'Time-Zone': 'America/Argentina/Buenos_Aires',
+        },
+      })
+    })
   })
 })

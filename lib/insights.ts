@@ -167,6 +167,29 @@ export function mapDashboardSummaryToMonthStats(
     monthLabel: getMonthLabelFromPeriod(summary.period?.from),
   }
 }
+export function getTimeZone(): string {
+  try {
+    if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+      try {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (timeZone) {
+          return timeZone
+        }
+      } catch (innerError) {
+        console.warn(
+          'Failed to resolve timezone options from Intl.DateTimeFormat:',
+          innerError,
+        )
+      }
+    }
+  } catch (outerError) {
+    console.warn(
+      'Intl or Intl.DateTimeFormat is not accessible or threw error:',
+      outerError,
+    )
+  }
+  return 'America/Argentina/Buenos_Aires'
+}
 
 export function useDashboardStats(): { stats: MonthStats; loading: boolean } {
   const { loading: storeLoading, expenseMutationsVersion } = useStore()
@@ -177,7 +200,11 @@ export function useDashboardStats(): { stats: MonthStats; loading: boolean } {
     let active = true
     setLoading(true)
 
-    fetch('/dashboard/spending')
+    fetch('/dashboard/spending', {
+      headers: {
+        'Time-Zone': getTimeZone(),
+      },
+    })
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(
