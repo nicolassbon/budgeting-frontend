@@ -43,12 +43,16 @@ pnpm format:check # check formatting
 
 ## Architecture
 
-Single-page shell, **not** file-system-routed app sections.
+Root app shell with hash-routed sections, plus one real password-reset route.
 
 - `app/page.tsx` renders `components/budgeting-app.tsx` (a `'use client'` root).
-- `BudgetingApp` uses `AuthProvider` from `lib/auth.tsx`; auth calls the backend session/login/register/logout endpoints (`/auth/me`, `/auth/login`, `/auth/register`, `/auth/logout`) and then renders `components/app-frame.tsx` for authenticated users.
-- `AppFrame` holds active section state (`'inicio' | 'historial' | 'insights'`) and switches between dashboard, history, and insights screens. Section links use hash anchors (`#/inicio`, `#/historial`, `#/insights`) — there is **one Next route** (`/`). Do not add `app/inicio/page.tsx`-style routes for app sections.
-- Global state lives in `lib/store.tsx` via React Context (`StoreProvider`). It is **in-memory mock state seeded with fixtures**, not persisted, not backed by an API. Do not wire it to a real backend yet.
+- `app/reset-password/page.tsx` is a real App Router page for reset links (`/reset-password?token=...`).
+- `BudgetingApp` uses `AuthProvider` from `lib/auth.tsx`; auth is cookie-session based, not JWT-based. The frontend calls `/auth/me`, `/auth/login`, `/auth/register`, and `/auth/logout`, and sends the `X-XSRF-TOKEN` header from the `XSRF-TOKEN` cookie on mutations.
+- `LoginScreen` also supports password recovery through `/auth/forgot-password`; `ResetPasswordPage` completes recovery through `/auth/reset-password`.
+- `AppFrame` holds active section state (`'inicio' | 'historial' | 'insights'`) and switches between dashboard, history, and insights screens. Section links use hash anchors (`#/inicio`, `#/historial`, `#/insights`) inside `/`. Do not add `app/inicio/page.tsx`-style routes for app sections.
+- Global expense state lives in `lib/store.tsx` via React Context (`StoreProvider`) and is backed by `HttpExpenseRepository`, which reads/writes the backend `/transactions` API. It is not fixture-only mock state.
+- Dashboard stats come from `/dashboard/spending`; weekly budgets are backend-backed by default through `GET/PUT /auth/me/weekly-budget`. `NEXT_PUBLIC_USE_BACKEND_WEEKLY_BUDGET=false` keeps the localStorage fallback available for explicit local runs.
+- `next.config.mjs` rewrites `/auth/*`, `/dashboard/*`, `/transactions/*`, and `/api/*` to the Spring Boot backend at `localhost:8080` during local development.
 - Path alias: `@/*` → repo root (`@/components`, `@/lib`).
 
 ## Domain rules (hard constraints)
@@ -56,10 +60,12 @@ Single-page shell, **not** file-system-routed app sections.
 From `lib/types.ts` and `docs/PRD.md`:
 
 - **Categories are the closed `Category` union in `lib/types.ts`** (`CATEGORIES` currently includes 18 backend-aligned uppercase values such as `COMIDA`, `SUPERMERCADO`, `FARMACIA`, `TRANSPORTE`, `OTROS`). Do not invent categories outside `CATEGORIES`.
-- **`Expense.amount` is integer ARS pesos** in the mock. (When real backend integration comes: the budgeting backend returns `amount` as a Java `double` in **centavos**, not pesos — handle the unit conversion at the data layer, do not blindly render backend values as pesos.)
-- **Confirmation-before-save is mandatory.** AI-interpreted expenses must NEVER be persisted automatically. They flow through a `DraftExpense` preview (`lib/types.ts`) and require explicit user approval. See `components/screens/capture-screen.tsx`.
-- Expense parsing is a **local heuristic** (`interpretExpense` in `lib/format.ts`), not an AI service. Voice capture uses the Web Speech API with `es-AR` locale and a visual simulation fallback when unsupported.
-- **Delete and date-range filtering are intentionally placeholders** ("próximamente") in the MVP. Do not implement them against fake backend capabilities.
+- **Frontend `Expense.amount` is ARS pesos. Backend transaction amounts are centavos.** Convert at the data layer only: `HttpExpenseRepository` divides backend `amount` by `100` when reading and sends `Math.round(input.amount * 100)` when creating/updating.
+- **Transaction list payload shape is `{ items: [...] }`.** `fetchExpenses()` reads `data.items`, filters invalid categories, and maps backend rows into frontend `Expense` objects.
+- **Confirmation-before-save is mandatory.** AI-interpreted expenses must NEVER be persisted automatically. They flow through an editable draft in `components/capture-console.tsx` and require explicit user approval before `addExpense()` calls `/transactions`.
+- Capture uses backend AI interpretation through `HttpCaptureService.interpretText()` → `POST /transactions/interpret`. Browser speech recognition (`es-AR`) and audio upload (`POST /api/transcribe`) only provide text; `/transactions/interpret` creates the draft.
+- `/transactions/interpret` draft amounts are converted from centavos to pesos in `lib/format.ts`; keep that boundary explicit to avoid displaying centavos as pesos.
+- Delete remains a local no-op in `HttpExpenseRepository.deleteExpense()`. Do not present deletion as backend-backed until the backend contract exists.
 
 ## UI copy conventions
 
