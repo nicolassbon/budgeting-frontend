@@ -155,6 +155,9 @@ describe('InsightsScreen', () => {
 
     expect(mockUseWeeklyBudget).toHaveBeenCalledWith('ana@example.com')
 
+    const openBtn = screen.getByRole('button', { name: /definir presupuesto/i })
+    fireEvent.click(openBtn)
+
     const input = screen.getByLabelText(/monto semanal/i)
     fireEvent.change(input, { target: { value: '75000' } })
     fireEvent.click(screen.getByRole('button', { name: /guardar/i }))

@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { formatARS } from '@/lib/format'
 import {
   computeComparison,
@@ -157,8 +158,14 @@ function WeeklyBudgetBlock({
   onSetAmount: (amount: number) => void
   weekExpenses: Expense[]
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [value, setValue] = useState(() => String(budget?.amount ?? ''))
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setValue(String(budget?.amount ?? ''))
+  }, [budget])
+
   const spent = weekExpenses.reduce((acc, expense) => acc + expense.amount, 0)
   const summary = budget ? summarizeWeeklyBudget(budget, spent) : null
 
@@ -170,75 +177,183 @@ function WeeklyBudgetBlock({
     }
     setError(null)
     onSetAmount(amount)
+    setIsModalOpen(false)
   }
+
+  useEffect(() => {
+    if (!isModalOpen) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsModalOpen(false)
+        setError(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isModalOpen])
 
   return (
     <Panel>
-      <div>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          Semana actual
-        </p>
-        <h2 className="text-lg font-semibold tracking-tight">
-          Presupuesto semanal
-        </h2>
-      </div>
-      {!budget && (
-        <p className="text-sm text-muted-foreground">
-          Definí un presupuesto semanal.
-        </p>
-      )}
-      <form
-        className="space-y-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          saveBudget()
-        }}
-      >
-        <div className="space-y-1.5">
-          <label htmlFor="weekly-budget-amount" className="text-sm font-medium">
-            Monto semanal
-          </label>
-          <input
-            id="weekly-budget-amount"
-            type="number"
-            min="0"
-            step="1"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            placeholder="Ej: 75000"
-            aria-invalid={error ? 'true' : 'false'}
-            aria-describedby={error ? 'weekly-budget-error' : undefined}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          {error && (
-            <p
-              id="weekly-budget-error"
-              role="alert"
-              className="text-sm text-destructive"
-            >
-              {error}
-            </p>
-          )}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            Semana actual
+          </p>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Presupuesto semanal
+          </h2>
         </div>
-        <Button
-          type="submit"
-          className="font-mono text-[10px] uppercase tracking-widest"
-        >
-          Guardar
-        </Button>
-      </form>
-      {summary && (
-        <div className="space-y-3">
+        {budget && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setValue(String(budget.amount))
+              setError(null)
+              setIsModalOpen(true)
+            }}
+            className="font-mono text-[10px] uppercase tracking-widest"
+          >
+            Modificar
+          </Button>
+        )}
+      </div>
+
+      {budget ? (
+        <div className="space-y-4">
           <div className="rounded-lg border border-border bg-surface-2 p-4">
-            <p className="font-medium">{summary.title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {summary.message}
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+              Monto asignado
+            </p>
+            <p className="mt-1 text-3xl font-mono font-semibold tracking-tight text-foreground">
+              {formatARS(budget.amount)}
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Metric label="Gastaste" value={formatARS(summary.spent)} />
-            <Metric label="Te quedan" value={formatARS(summary.remaining)} />
-            <Metric label="Uso" value={`${summary.percentUsed}% usado`} />
+
+          {summary && (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border bg-surface-2 p-4">
+                <p className="font-medium">{summary.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {summary.message}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Metric label="Gastaste" value={formatARS(summary.spent)} />
+                <Metric
+                  label="Te quedan"
+                  value={formatARS(summary.remaining)}
+                />
+                <Metric label="Uso" value={`${summary.percentUsed}% usado`} />
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-border rounded-lg bg-surface-2/30">
+          <p className="text-sm text-muted-foreground mb-4">
+            No definiste un presupuesto semanal para esta semana.
+          </p>
+          <Button
+            onClick={() => {
+              setValue('')
+              setError(null)
+              setIsModalOpen(true)
+            }}
+            className="font-mono text-[10px] uppercase tracking-widest"
+          >
+            Definir presupuesto
+          </Button>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="budget-modal-title"
+            className="w-full max-w-md rounded-lg border border-border bg-card p-6 text-card-foreground shadow-level-5 space-y-4"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3
+                  id="budget-modal-title"
+                  className="text-lg font-semibold tracking-tight"
+                >
+                  {budget
+                    ? 'Modificar presupuesto'
+                    : 'Definir presupuesto semanal'}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Establecé el límite de gasto para la semana actual.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setError(null)
+                }}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                saveBudget()
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="weekly-budget-amount"
+                  className="text-sm font-medium"
+                >
+                  Monto semanal
+                </label>
+                <Input
+                  id="weekly-budget-amount"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={value}
+                  onChange={(event) => setValue(event.target.value)}
+                  placeholder="Ej: 75000"
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-describedby={error ? 'weekly-budget-error' : undefined}
+                  autoFocus
+                />
+                {error && (
+                  <p
+                    id="weekly-budget-error"
+                    role="alert"
+                    className="text-sm text-destructive"
+                  >
+                    {error}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsModalOpen(false)
+                    setError(null)
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Guardar</Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
