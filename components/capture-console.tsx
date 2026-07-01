@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Mic, Paperclip, Square, Loader2, ChevronDown } from 'lucide-react'
+import { Mic, Paperclip, Square, Loader2, ChevronDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { mockCaptureService } from '@/lib/format'
 import { useStore } from '@/lib/store'
@@ -156,6 +156,20 @@ export function CaptureConsole({ onSaved }: CaptureConsoleProps) {
       setErrorMessage('No detectamos audio. Intentá de nuevo.')
     }
   }, [interpretTextDirectly])
+
+  const cancelRecording = useCallback(() => {
+    try {
+      if (recognitionRef.current) {
+        recognitionRef.current.onerror = null
+        recognitionRef.current.stop()
+      }
+    } catch {
+      // noop
+    }
+    transcriptRef.current = ''
+    setLiveTranscript('')
+    setModalState('idle')
+  }, [])
 
   // Keyboard shortcuts and custom events
   useEffect(() => {
@@ -358,13 +372,25 @@ export function CaptureConsole({ onSaved }: CaptureConsoleProps) {
                     />
                   </div>
 
-                  <button
-                    onClick={stopRecording}
-                    className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg"
-                    aria-label="Detener grabación"
-                  >
-                    <Square className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={cancelRecording}
+                      className="w-12 h-12 rounded-full border border-border/45 bg-secondary/80 backdrop-blur-xl hover:bg-accent text-muted-foreground hover:text-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 shadow-md cursor-pointer"
+                      aria-label="Cancelar grabación"
+                      title="Cancelar"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+
+                    <button
+                      onClick={stopRecording}
+                      className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg cursor-pointer"
+                      aria-label="Detener grabación"
+                      title="Confirmar"
+                    >
+                      <Square className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               )}
 

@@ -178,6 +178,28 @@ describe('CaptureConsole', () => {
 
       expect(screen.getByTestId('wave-bars')).toBeInTheDocument()
       expect(screen.getByLabelText('Detener grabación')).toBeInTheDocument()
+      expect(screen.getByLabelText('Cancelar grabación')).toBeInTheDocument()
+    })
+
+    it('returns to idle state and clears transcripts on cancel click', () => {
+      const onSaved = vi.fn()
+      render(<CaptureConsole onSaved={onSaved} />)
+
+      fireEvent.click(screen.getByLabelText('Capturar gasto'))
+      fireEvent.click(screen.getByLabelText('Iniciar grabación'))
+
+      act(() => {
+        lastSpeechInstance.onresult({
+          results: [[{ transcript: 'gasto parcial...' }]],
+        })
+      })
+
+      fireEvent.click(screen.getByLabelText('Cancelar grabación'))
+
+      expect(
+        screen.getByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
+      ).toBeInTheDocument()
+      expect(screen.queryByTestId('wave-bars')).not.toBeInTheDocument()
     })
 
     it('shows processing indicator during interpretation', () => {
