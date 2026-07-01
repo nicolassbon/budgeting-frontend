@@ -13,9 +13,9 @@
 
 ## Specs Sync
 
-| Domain | Action | Details |
-|--------|--------|---------|
-| — | No delta specs | This mini-SDD slice has no `specs/` directory. No main specs to update. |
+| Domain | Action         | Details                                                                 |
+| ------ | -------------- | ----------------------------------------------------------------------- |
+| —      | No delta specs | This mini-SDD slice has no `specs/` directory. No main specs to update. |
 
 ## Archive Contents (archived to `openspec/changes/archive/2026-06-30-align-history-dashboard-dates/`)
 
@@ -38,6 +38,7 @@
 ## Config Rules Applied
 
 From `openspec/config.yaml`:
+
 - ✅ "Merge only finalized deltas into main specs" — No deltas to merge; N/A.
 - ✅ "Preserve archived changes as immutable audit trail" — Archive directory moved and sealed.
 

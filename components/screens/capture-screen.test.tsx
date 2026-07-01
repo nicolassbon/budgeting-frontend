@@ -31,7 +31,7 @@ describe('CaptureScreen', () => {
       status: 200,
       json: async () => ({
         description: '70 mil en el super',
-        amount: 70000,
+        amount: 7000000,
         category: 'COMIDA',
       }),
     })

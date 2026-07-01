@@ -44,12 +44,12 @@ describe('DashboardScreen', () => {
       ],
     })
 
-    render(
-      <DashboardScreen onCapture={vi.fn()} onSeeHistory={vi.fn()} />,
-    )
+    render(<DashboardScreen onCapture={vi.fn()} onSeeHistory={vi.fn()} />)
 
     expect(screen.getByText('Supermercado Disco')).toBeInTheDocument()
-    expect(screen.queryByText('Sin movimientos registrados')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Sin movimientos registrados'),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('$ 70.000')).toBeInTheDocument()
   })
 })

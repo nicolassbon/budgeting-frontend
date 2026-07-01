@@ -145,9 +145,6 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
           <TableHeader>
             <TableRow className="border-b border-border bg-white/[0.02] hover:bg-white/[0.02]">
               <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
-                Estado
-              </TableHead>
-              <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
                 Fecha
               </TableHead>
               <TableHead className="py-3 px-6 text-[10px] font-mono uppercase tracking-widest text-muted-foreground font-semibold">
@@ -170,9 +167,6 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
                 key={expense.id}
                 className="hover:bg-white/[0.03] transition-colors group border-b border-border last:border-0"
               >
-                <TableCell className="py-4 px-6">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
-                </TableCell>
                 <TableCell className="py-4 px-6 text-[11px] font-mono text-muted-foreground">
                   {formatDate(expense.date)}
                 </TableCell>
@@ -219,7 +213,7 @@ export function HistoryScreen({ onUpdated }: HistoryScreenProps) {
             {items.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={5}
                   className="py-20 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest"
                 >
                   Sin movimientos en esta categoría

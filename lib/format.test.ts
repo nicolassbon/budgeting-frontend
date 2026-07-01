@@ -50,7 +50,7 @@ describe('HttpCaptureService', () => {
       status: 200,
       json: async () => ({
         description: 'Supermercado Coto',
-        amount: 3500,
+        amount: 350000,
         category: 'COMIDA',
       }),
     })

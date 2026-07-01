@@ -27,10 +27,10 @@ This specification uses keywords defined in RFC 2119 to indicate requirement lev
   }
   ```
 - The frontend MUST parse this JSON payload and map it to the internal `Interpretation` format.
-- If the parsed `amount` is not `null`, the frontend MUST convert the value from centavos (backend representation) to pesos (frontend representation) by dividing the value by `100`.
-- The frontend MUST validate the category string returned by the backend against the strict union type: `'GROCERIES' | 'PHARMA' | 'AUTO'`.
+- If the parsed `amount` is not `null`, the frontend MUST convert the value from centavos (backend representation, which is an integer) to pesos (frontend representation) by dividing the value by `100`.
+- The frontend MUST validate the category string returned by the backend against the strict union type of supported Spanish categories: `'COMIDA' | 'SUPERMERCADO' | 'FARMACIA' | 'ROPA' | 'TRANSPORTE' | 'VIVIENDA' | 'HOGAR' | 'SERVICIOS' | 'ENTRETENIMIENTO' | 'EDUCACION' | 'SALUD' | 'CUIDADO_PERSONAL' | 'MASCOTAS' | 'SUSCRIPCIONES' | 'REGALOS' | 'IMPUESTOS' | 'DEUDAS' | 'OTROS'`.
 - If the returned category matches one of the valid strings, the frontend MUST map it to the corresponding `Category` type.
-- If the category returned is `null`, is absent, or does not match one of the three allowed values, the frontend MUST map it to `null`.
+- If the category returned is `null`, is absent, or does not match one of the allowed values, the frontend MUST map it to `null`.
 - If the description returned by the backend is `null`, empty, or missing, the frontend MUST fall back to using the user's raw text input as the draft description.
 
 ### 1.3 Error & Offline Fallback Behaviors
@@ -57,13 +57,13 @@ This specification uses keywords defined in RFC 2119 to indicate requirement lev
     {
       "description": "Supermercado Coto",
       "amount": 3500000,
-      "category": "GROCERIES"
+      "category": "SUPERMERCADO"
     }
     ```
-- **Then**: The frontend converts `3500000` cents to `35000` pesos, maps `GROCERIES` to `GROCERIES` (translated visually to "Supermercado" in the preview), and populates the Draft Preview with:
+- **Then**: The frontend converts `3500000` cents to `35000` pesos, maps `SUPERMERCADO` to `SUPERMERCADO` (translated visually to "Supermercado" in the preview), and populates the Draft Preview with:
   - Description: `"Supermercado Coto"`
   - Amount: `35000`
-  - Category: `'GROCERIES'`
+  - Category: `'SUPERMERCADO'`
 - **Verification**: The user sees the draft banner and selects "Guardar gasto" to persist.
 
 ### 2.2 Scenario B: Failed Interpretation / API Error

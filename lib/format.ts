@@ -157,12 +157,13 @@ export class HttpCaptureService implements CaptureService {
 
     const data = await res.json()
 
-    // The `/transactions/interpret` draft endpoint returns `amount` in ARS
-    // pesos (not centavos, unlike the persisted transactions API). Preserve
-    // the value as-is for the preview; unit conversion for persisted
-    // expenses happens in `lib/store.tsx`.
+    // The `/transactions/interpret` draft endpoint returns `amount` in integer
+    // centavos. We divide it by 100 to convert to pesos, which is the unit
+    // expected by the client-side `Interpretation` and UI draft preview.
     const amount =
-      data.amount !== null && data.amount !== undefined ? data.amount : null
+      data.amount !== null && data.amount !== undefined
+        ? data.amount / 100
+        : null
 
     const category = isCategory(data.category) ? data.category : null
 
