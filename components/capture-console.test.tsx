@@ -99,7 +99,9 @@ describe('CaptureConsole', () => {
       // Close modal
       fireEvent.keyDown(window, { ctrlKey: true, key: 'k' })
       expect(
-        screen.queryByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
+        screen.queryByText(
+          'Contanos tu gasto, lo interpretamos y vos confirmás',
+        ),
       ).not.toBeInTheDocument()
     })
   })
@@ -131,7 +133,9 @@ describe('CaptureConsole', () => {
 
       fireEvent.keyDown(window, { key: 'Escape' })
       expect(
-        screen.queryByText('Contanos tu gasto, lo interpretamos y vos confirmás'),
+        screen.queryByText(
+          'Contanos tu gasto, lo interpretamos y vos confirmás',
+        ),
       ).not.toBeInTheDocument()
     })
   })

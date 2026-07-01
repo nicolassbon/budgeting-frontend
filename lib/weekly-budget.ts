@@ -13,6 +13,17 @@ export interface WeeklyBudgetRepository {
   clear: (email: string) => Promise<WeeklyBudget | null>
 }
 
+export type WeeklyBudgetStatus = 'healthy' | 'warning' | 'exceeded'
+
+export interface WeeklyBudgetSummary {
+  spent: number
+  remaining: number
+  percentUsed: number
+  status: WeeklyBudgetStatus
+  title: string
+  message: string
+}
+
 export function weeklyBudgetKey(email: string): string {
   return `budgeting_weekly_budget_${email}`
 }
@@ -50,6 +61,51 @@ export function writeWeeklyBudget(email: string, amount: number): void {
     updatedAt: new Date().toISOString(),
   }
   window.localStorage.setItem(weeklyBudgetKey(email), JSON.stringify(budget))
+}
+
+export function summarizeWeeklyBudget(
+  budget: WeeklyBudget,
+  spent: number,
+): WeeklyBudgetSummary {
+  const percentUsed =
+    budget.amount === 0
+      ? spent > 0
+        ? 999
+        : 0
+      : Math.min(Math.round((spent / budget.amount) * 100), 999)
+  const status: WeeklyBudgetStatus =
+    percentUsed >= 100 ? 'exceeded' : percentUsed >= 80 ? 'warning' : 'healthy'
+  const remaining = Math.max(budget.amount - spent, 0)
+
+  switch (status) {
+    case 'exceeded':
+      return {
+        spent,
+        remaining,
+        percentUsed,
+        status,
+        title: 'Presupuesto excedido',
+        message: 'Ya superaste tu presupuesto semanal. Revisá próximos gastos.',
+      }
+    case 'warning':
+      return {
+        spent,
+        remaining,
+        percentUsed,
+        status,
+        title: 'Atención al presupuesto',
+        message: 'Estás cerca del límite semanal. Priorizá los gastos clave.',
+      }
+    case 'healthy':
+      return {
+        spent,
+        remaining,
+        percentUsed,
+        status,
+        title: 'Presupuesto saludable',
+        message: 'Venís dentro del presupuesto semanal.',
+      }
+  }
 }
 
 function getCookie(name: string): string | null {

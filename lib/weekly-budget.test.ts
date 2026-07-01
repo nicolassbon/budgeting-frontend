@@ -6,6 +6,7 @@ import {
   createWeeklyBudgetRepository,
   localStorageWeeklyBudgetRepository,
   readWeeklyBudget,
+  summarizeWeeklyBudget,
   useWeeklyBudget,
   weeklyBudgetKey,
   writeWeeklyBudget,
@@ -99,6 +100,36 @@ describe('weekly budget persistence', () => {
     expect(createWeeklyBudgetRepository('false')).toBe(
       localStorageWeeklyBudgetRepository,
     )
+  })
+
+  it.each([
+    { spent: 79000, status: 'healthy', percentUsed: 79 },
+    { spent: 80000, status: 'warning', percentUsed: 80 },
+    { spent: 100000, status: 'exceeded', percentUsed: 100 },
+  ] as const)(
+    'classifies $percentUsed% weekly usage as $status',
+    ({ spent, status, percentUsed }) => {
+      expect(
+        summarizeWeeklyBudget({ amount: 100000, updatedAt: 'now' }, spent),
+      ).toMatchObject({
+        status,
+        spent,
+        remaining: Math.max(100000 - spent, 0),
+        percentUsed,
+      })
+    },
+  )
+
+  it('returns concise copy for exceeded weekly budget usage', () => {
+    expect(
+      summarizeWeeklyBudget({ amount: 100000, updatedAt: 'now' }, 125000),
+    ).toMatchObject({
+      status: 'exceeded',
+      percentUsed: 125,
+      remaining: 0,
+      title: 'Presupuesto excedido',
+      message: 'Ya superaste tu presupuesto semanal. Revisá próximos gastos.',
+    })
   })
 
   it('reads null from the backend weekly budget contract', async () => {

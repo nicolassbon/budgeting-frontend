@@ -14,7 +14,11 @@ import {
 import { useStore } from '@/lib/store'
 import { translateCategory, type Expense } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
-import { useWeeklyBudget, type WeeklyBudget } from '@/lib/weekly-budget'
+import {
+  summarizeWeeklyBudget,
+  useWeeklyBudget,
+  type WeeklyBudget,
+} from '@/lib/weekly-budget'
 
 interface InsightsScreenProps {
   refDate?: Date
@@ -156,14 +160,7 @@ function WeeklyBudgetBlock({
   const [value, setValue] = useState(() => String(budget?.amount ?? ''))
   const [error, setError] = useState<string | null>(null)
   const spent = weekExpenses.reduce((acc, expense) => acc + expense.amount, 0)
-  const remaining = budget ? Math.max(budget.amount - spent, 0) : 0
-  const percentUsed = budget
-    ? budget.amount === 0
-      ? spent > 0
-        ? 999
-        : 0
-      : Math.min(Math.round((spent / budget.amount) * 100), 999)
-    : 0
+  const summary = budget ? summarizeWeeklyBudget(budget, spent) : null
 
   function saveBudget() {
     const amount = Number(value)
@@ -230,11 +227,19 @@ function WeeklyBudgetBlock({
           Guardar
         </Button>
       </form>
-      {budget && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Metric label="Gastaste" value={formatARS(spent)} />
-          <Metric label="Te quedan" value={formatARS(remaining)} />
-          <Metric label="Uso" value={`${percentUsed}% usado`} />
+      {summary && (
+        <div className="space-y-3">
+          <div className="rounded-lg border border-border bg-surface-2 p-4">
+            <p className="font-medium">{summary.title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {summary.message}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Metric label="Gastaste" value={formatARS(summary.spent)} />
+            <Metric label="Te quedan" value={formatARS(summary.remaining)} />
+            <Metric label="Uso" value={`${summary.percentUsed}% usado`} />
+          </div>
         </div>
       )}
     </Panel>

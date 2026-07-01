@@ -1,5 +1,6 @@
 'use client'
 
+import { Activity } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import {
@@ -28,28 +29,9 @@ export function AuthShell({
     <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-3 text-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={64}
-            height={64}
-            viewBox="0 0 44 44"
-            className="mx-auto"
-          >
-            <rect
-              width="44"
-              height="44"
-              className="rounded-lg fill-primary"
-              rx="8"
-            />
-            <path
-              d="M15 29V15m0 0h10a4 4 0 0 1 0 8H15m0 0h12"
-              fill="none"
-              className="stroke-primary-foreground"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <div className="mx-auto w-16 h-16 bg-primary rounded-[16px] flex items-center justify-center">
+            <Activity className="h-9 w-9 text-white" />
+          </div>
           <div className="space-y-1">
             <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
             <p className="text-sm text-muted-foreground">{subtitle}</p>
