@@ -84,7 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signup = async (email: string, password: string) => {
-    if (!email.trim() || !email.includes('@')) {
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
       throw new Error('Ingresá un email válido.')
     }
     if (password.length < 6) {
@@ -98,15 +100,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         'Content-Type': 'application/json',
         'X-XSRF-TOKEN': xsrf || '',
       },
-      body: JSON.stringify({ email: email.trim(), password }),
+      body: JSON.stringify({ email: trimmedEmail, password }),
     })
 
     if (!response.ok) {
       throw new Error('El usuario ya está registrado.')
     }
 
-    const data = await response.json()
-    setUser(mapBackendUser(data))
+    await login(trimmedEmail, password)
   }
 
   const signOut = async () => {

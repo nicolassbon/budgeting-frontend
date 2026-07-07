@@ -188,6 +188,13 @@ describe('auth hook', () => {
           json: () => Promise.resolve({ id: 789, email: 'new@budgeting.app' }),
         })
       }
+      if (url === '/auth/login') {
+        return Promise.resolve({
+          status: 200,
+          ok: true,
+          json: () => Promise.resolve({ id: 789, email: 'new@budgeting.app' }),
+        })
+      }
       return Promise.reject(new Error('Unknown url'))
     })
     vi.stubGlobal('fetch', mockFetch)
@@ -209,7 +216,18 @@ describe('auth hook', () => {
       id: '789',
       email: 'new@budgeting.app',
     })
-    expect(mockFetch).toHaveBeenLastCalledWith('/auth/register', {
+    expect(mockFetch).toHaveBeenCalledWith('/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': 'signup-xsrf-token',
+      },
+      body: JSON.stringify({
+        email: 'new@budgeting.app',
+        password: 'supersecret',
+      }),
+    })
+    expect(mockFetch).toHaveBeenLastCalledWith('/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
