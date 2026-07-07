@@ -13,6 +13,10 @@ const nextConfig = {
         destination: `${backendUrl}/dashboard/:path*`,
       },
       {
+        source: '/transactions',
+        destination: `${backendUrl}/transactions`,
+      },
+      {
         source: '/transactions/:path*',
         destination: `${backendUrl}/transactions/:path*`,
       },
